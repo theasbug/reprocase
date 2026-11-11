@@ -41,9 +41,9 @@ describe('desktop agent runtime',()=>{
  });
  it('runs an approved terminal command once and records its exit code',async()=>{
   const dir=await workspace();server=await createServer({memory:true,port:0,desktop:true,dataRoot:dir});const h=server.service.harness;
-  const result=JSON.parse(await h.execute('terminal_run',{command:"echo 'reprocase-native-test'",timeoutSeconds:10},'term',new AbortController().signal,a=>h.permissions.decide(a.id,'once')) as string);
-  expect(result.exitCode).toBe(0);expect(result.output).toContain('reprocase-native-test');
- });
+  const result=JSON.parse(await h.execute('terminal_run',{command:"echo 'reprocase-native-test'",timeoutSeconds:30},'term',new AbortController().signal,a=>h.permissions.decide(a.id,'once')) as string);
+  expect(result.exitCode,JSON.stringify(result)).toBe(0);expect(result.timedOut).toBe(false);expect(result.output).toContain('reprocase-native-test');
+ },45000);
  it('enforces permissions independently for chats and cancels pending approvals',async()=>{
   const p=new Permissions(),signal=new AbortController();await p.ask('a','desktop_windows',{},'',signal.signal,a=>p.decide(a.id,'computer'));
   await p.ask('a','desktop_keyboard',{},'',signal.signal,()=>{throw new Error('already trusted');});

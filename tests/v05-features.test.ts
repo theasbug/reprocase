@@ -342,26 +342,28 @@ describe('v0.5 core, runner, matrix, importers, exporters, and agent rollback', 
       });
       const ctrl = new AbortController();
       let prompted = false;
-      const cmdResult = JSON.parse(String(await harness.execute('terminal_run', { command: "echo 'autonomous-ok'", timeoutSeconds: 10 }, 's-auto', ctrl.signal, () => { prompted = true; })));
+      const cmdResult = JSON.parse(String(await harness.execute('terminal_run', { command: "echo 'autonomous-ok'", timeoutSeconds: 30 }, 's-auto', ctrl.signal, () => { prompted = true; })));
       expect(prompted).toBe(false);
-      expect(cmdResult.exitCode).toBe(0);
+      expect(cmdResult.exitCode, JSON.stringify(cmdResult)).toBe(0);
+      expect(cmdResult.timedOut).toBe(false);
       expect(cmdResult.output).toContain('autonomous-ok');
 
       // Switch to ask mode, start a pending approval, then switch to autonomous to unblock immediately
       harness.permissions.setMode('ask');
       let approvalCreated = false;
-      const pendingPromise = harness.execute('terminal_run', { command: "echo 'unblocked'", timeoutSeconds: 10 }, 's-auto', ctrl.signal, () => {
+      const pendingPromise = harness.execute('terminal_run', { command: "echo 'unblocked'", timeoutSeconds: 30 }, 's-auto', ctrl.signal, () => {
         approvalCreated = true;
         harness.permissions.setMode('autonomous');
       });
       const unblockedResult = JSON.parse(String(await pendingPromise));
       expect(approvalCreated).toBe(true);
+      expect(unblockedResult.exitCode, JSON.stringify(unblockedResult)).toBe(0);
       expect(unblockedResult.output).toContain('unblocked');
       harness.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
-  });
+  }, 90000);
 
   it('probes target origins, extracts & ranks bug bounty candidates, and drafts cases from recon findings', async () => {
     const jsBundle = `

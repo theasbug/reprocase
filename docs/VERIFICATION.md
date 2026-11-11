@@ -10,7 +10,7 @@ Local Windows x64 verification on 11 November 2026, Node 24.18.0 / Electron 45.2
 
 ## Release scope
 
-Hosted GitHub Actions has NOT been executed by this local session. The included workflow defines Linux/Windows checks and Windows packaging/smoke; do not label that workflow green until a real run passes. Linux/macOS native computer control is not delivered. No second physical Windows machine was tested. No live remote model or external bounty target was contacted for these fixes; AI transport contracts use an owned local provider. Earlier Beam/provider records are historical, not current-beta live-model verification.
+Hosted results are reported separately in [GitHub Actions](https://github.com/theasbug/reprocase/actions/workflows/ci.yml): Linux/Windows source checks and Windows packaging/smoke. The README badge reflects the actual hosted status; local results alone do not establish a green workflow. Linux/macOS native computer control is not delivered. No second physical Windows machine was tested. No live remote model or external bounty target was contacted for these fixes; AI transport contracts use an owned local provider. Earlier Beam/provider records are historical, not current-beta live-model verification.
 
 Program custom header values are session-only, excluded from new SQLite program metadata and agent output. Legacy on-disk backups/WAL pages may still retain earlier values; this release does not erase old copies. Rate/scope policy applies to ReproCase-managed API scans and case execution, not arbitrary terminal commands, desktop user interactions or external MCP servers. Cancellation cannot undo effects of a request already dispatched.
 
@@ -18,6 +18,6 @@ Hurl is explicitly a request draft, not a proof. Playwright proofs require a Rep
 
 ## Known release limitations
 
-Windows binaries are unsigned. The earlier dependency audit found zero runtime advisories and five moderate affected development-package records from glob/minimatch in the Electron packaging chain; these were not force-downgraded. Rerun npm audit before publishing. No application security certification is implied by a clean dependency audit.
+Windows binaries are unsigned. The pre-publication dependency audit on 11 November 2026 found zero runtime advisories and five moderate affected development-package records from glob/minimatch in the Electron packaging chain; these were not force-downgraded. No application security certification is implied by a clean dependency audit.
 
 Only clean source files and application files belong in release archives. ReproCase-data, .browsers, node_modules and local credentials are excluded from the source archive. Source and portable binary are distributed separately with SHA-256 checksums. This is a beta candidate, not a stable-security guarantee.
