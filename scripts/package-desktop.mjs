@@ -1,0 +1,15 @@
+import {packager} from '@electron/packager';
+import {existsSync,readFileSync,writeFileSync} from 'node:fs';
+import {resolve,join,dirname,basename} from 'node:path';
+const root=process.cwd(),pkg=JSON.parse(readFileSync('package.json','utf8'));
+process.env.PLAYWRIGHT_BROWSERS_PATH??=resolve('.browsers');
+const {chromium}=await import('playwright');
+const expected=chromium.executablePath();
+const configured=process.env.REPROCASE_PACKAGE_CHROMIUM;
+const browser=configured?resolve(configured):dirname(dirname(expected));
+if(!/^chromium-\d+$/.test(basename(browser))||!existsSync(join(browser,'chrome-win64/chrome.exe')))throw new Error('Run npm run browsers:install, or set REPROCASE_PACKAGE_CHROMIUM to a chromium-NNNN folder containing chrome-win64/chrome.exe.');
+const out=process.env.REPROCASE_PACKAGE_OUT?resolve(process.env.REPROCASE_PACKAGE_OUT):resolve(root,'../desktop-release-'+pkg.version);
+if(existsSync(join(out,'ReproCase-win32-x64')))throw new Error('Output already exists. Select a NEW REPROCASE_PACKAGE_OUT directory; existing user data is never overwritten.');
+writeFileSync('desktop/browser-manifest.json',JSON.stringify({resourceDir:basename(browser),executable:'chrome-win64/chrome.exe'},null,2));
+const paths=await packager({dir:root,out,name:'ReproCase',appVersion:pkg.version,platform:'win32',arch:'x64',electronVersion:pkg.devDependencies.electron,download:{cacheRoot:resolve(process.env.REPROCASE_ELECTRON_CACHE??join(root,'.cache','electron-packager'))},asar:false,prune:true,overwrite:false,icon:resolve('desktop/assets/reprocase.ico'),extraResource:[browser],ignore:[/^\/(ReproCase-data|\.cache|\.reprocase|\.browsers|\.git|\.github|work|test-results(?:-desktop)?|playwright-report|benchmark-results|tests|release)(\/|$)/,/^\/desktop\/src(\/|$)/,/\.env(?:\.|$)/],win32metadata:{CompanyName:'ReproCase contributors',FileDescription:'ReproCase bug bounty workbench (beta)',ProductName:'ReproCase'}});
+console.log(JSON.stringify({packaged:paths,browser:basename(browser)}));

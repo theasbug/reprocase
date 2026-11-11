@@ -1,0 +1,3490 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "Fresh-account cross-tenant document reproduction on the owned local fixture",
+  "startedAt": "2026-11-10T18:14:12.629Z",
+  "completedAt": "2026-11-10T18:14:13.166Z",
+  "nodeVersion": "v24.18.0",
+  "platform": "win32",
+  "reprocaseVersion": "0.3.0",
+  "hurlVersion": "hurl 8.1.0 (Windows) libcurl/8.23.0 Schannel zlib/1.3.2 nghttp2/1.70.0",
+  "hurlSource": {
+    "downloadedAt": "2026-11-10T16:12:57.6391677Z",
+    "checksumVerified": true,
+    "assetUrl": "https://github.com/Orange-OpenSource/hurl/releases/download/8.1.0/hurl-8.1.0-x86_64-pc-windows-msvc.zip",
+    "actualSha256": "dd4eb70d966f37f872d5df9be3926ea18d97e9a93f216cd0875bf0db447d7798",
+    "expectedSha256": "dd4eb70d966f37f872d5df9be3926ea18d97e9a93f216cd0875bf0db447d7798",
+    "asset": "hurl-8.1.0-x86_64-pc-windows-msvc.zip",
+    "release": "8.1.0",
+    "releaseUrl": "https://github.com/Orange-OpenSource/hurl/releases/tag/8.1.0"
+  },
+  "caseSha256": "d7486bd7210883c7f127e7611649f42a2d27612d08e97503682e3ec09880ce84",
+  "sourceHashes": {
+    "package.json": "15cd7e0ef99f7dbfd1881a06523fb90c3162a1bee0328c4f382944a6287ea898",
+    "package-lock.json": "263feafd9718d2e7817b6faab253594c3a5f9a8db0be71b71e904eee9474b147",
+    "packages/core/src/schema.ts": "1cffb9f0cf7aeaf97d3d9e2d9b2c20f509c9d05b13c3ebc1e201ef0ad3798677",
+    "packages/core/src/version.ts": "cb06a36cbf765875601b153af386eeaf91620338ae3e2394c5e67050568f7aab",
+    "packages/core/src/authoring.ts": "04e0f4d1084076b401461a084f0541d7c6b252a7083d029116e799646460f2f4",
+    "packages/core/src/preflight.ts": "b3d3c526c47e53c948d0db914a1c77aedb2b3c1558fd980c8ab3b290379b2a1c",
+    "packages/core/src/compare.ts": "f6ada360337d2dafe140012701ce205f76b3ebb0fd476f104471a2f5f87da721",
+    "packages/core/src/runner.ts": "844703da5d6d16d6e598c3d3bd44e92da4d013433ce3daef5e9c2f5e78bc173a",
+    "packages/core/src/values.ts": "e662f2f945daca29a88eaf246b56c0d908b216a81ed99f401fa97ef11c4f9bcb",
+    "packages/core/src/validate.ts": "327d6c2bf8c12de72746aae5f828aecebb7205328562f8fd1bfcf4c8a59e013f",
+    "packages/core/src/redact.ts": "52d97c2fb786d436376a8103f1c9742d0e4b541bb28abb8d124badfc3846cfbd",
+    "packages/browser/src/index.ts": "a80dfcb454adcdebbfe2edd0ffd6e1a3f02da0512fbf1994434a7368de461d5e",
+    "apps/server/src/demo.ts": "b502007abd260ee311468102fa8e718ac526d9d2a971b8c1fb37913146a60c62",
+    "examples/cross-tenant.hurl": "dbcc4369c2a6ee1d2509b0fa0867da80a6d2a41be0e2cd4be6642f3a63404b3f",
+    "examples/cross-tenant-denied.hurl": "e776b1e4089f110b7b8e5327e75552ad9d2ad36148bb88446153546010f1a9a4",
+    "scripts/benchmark.ts": "623bae194ef43d15779901a1b46004d70756fc3639b2cfc2a707547c91b1612d"
+  },
+  "conditions": {
+    "fixture": "Owned local Fastify application; no external test target",
+    "modes": [
+      "vulnerable",
+      "secure"
+    ],
+    "authModes": [
+      "cookie",
+      "bearer"
+    ],
+    "independentPairsPerToolPerCell": 2,
+    "expectedHurlHTTPCalls": 7,
+    "expectedReproCaseHTTPCalls": 9,
+    "harnessAuthenticationExcludedFromRequestCounts": true,
+    "templatesEditedBetweenPairs": false,
+    "bothToolsReceiveNewAccounts": true,
+    "providerAPIUsed": false
+  },
+  "interpretation": [
+    "These observations measure the declared fixture scenarios, not general vulnerability detection or universal correctness.",
+    "Both tools support fresh bound workflows. Hurl uses an explicitly authored violation or denial recipe; a failing positive assertion is never classified as a negative finding.",
+    "The harness supplies a new marker to this authored Hurl baseline; ReproCase generates it internally. This is not a claim that Hurl cannot generate dynamic values.",
+    "Manual template edits are zero for both tools in this automated harness; supplied-binding lists document configuration inputs, not measured human effort or completion time.",
+    "ReproCase sends extra live identity rechecks. Request counts therefore differ and are not a speed comparison.",
+    "Credentials and literal observed account/resource values are not included in the persisted results. Hurl raw JSON is inspected in memory and not saved."
+  ],
+  "totalTrials": 16,
+  "passedTrials": 16,
+  "allChecksPassed": true,
+  "trials": [
+    {
+      "tool": "reprocase",
+      "mode": "vulnerable",
+      "authMode": "cookie",
+      "pair": 1,
+      "expectedVerdict": "reproduced",
+      "observedVerdict": "reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "api origin",
+        "owner account credential",
+        "researcher account credential"
+      ],
+      "requestCount": 9,
+      "code": "witness_observed",
+      "evidence": {
+        "schemaVersion": 1,
+        "id": "45beba00-4449-4f3b-9c9a-1bad1d49c281",
+        "caseId": "benchmark-cross-tenant",
+        "caseRevision": 1,
+        "state": "completed",
+        "verdict": "reproduced",
+        "reason": "The declared access boundary was crossed with this run’s fresh resource and verified accounts",
+        "code": "witness_observed",
+        "startedAt": "2026-11-10T18:14:12.781Z",
+        "steps": [
+          {
+            "id": "identity-owner-0",
+            "label": "Verify Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.783Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "118",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.789Z"
+          },
+          {
+            "id": "identity-researcher-1",
+            "label": "Verify Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.789Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "125",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.790Z"
+          },
+          {
+            "id": "csrf",
+            "label": "Get the owner’s current CSRF token",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.791Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/csrf"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "csrf": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.792Z"
+          },
+          {
+            "id": "create-document",
+            "label": "Create a fresh private document",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.792Z",
+            "checks": [
+              {
+                "id": "private-document",
+                "label": "The new document is private",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "url": "http://127.0.0.1:53572/documents",
+              "body": {
+                "title": "ReproCase controlled test document",
+                "marker": "[run.marker]"
+              }
+            },
+            "response": {
+              "status": 201,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.794Z"
+          },
+          {
+            "id": "owner-read",
+            "label": "Confirm the owner can read the marker",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.794Z",
+            "checks": [
+              {
+                "id": "owner-marker",
+                "label": "Owner reads this run’s marker",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.795Z"
+          },
+          {
+            "id": "recheck-owner-5",
+            "label": "Recheck Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.795Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "118",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.796Z"
+          },
+          {
+            "id": "recheck-researcher-6",
+            "label": "Recheck Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.796Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "125",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.797Z"
+          },
+          {
+            "id": "cross-tenant-read",
+            "label": "Read the same document as the other tenant",
+            "actor": "researcher",
+            "phase": "probe",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.797Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.798Z"
+          },
+          {
+            "id": "remove-document",
+            "label": "Remove the document created by this run",
+            "actor": "owner",
+            "phase": "cleanup",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.798Z",
+            "checks": [],
+            "request": {
+              "method": "DELETE",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "16",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "deleted": true
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.799Z"
+          }
+        ],
+        "checks": [
+          {
+            "id": "distinct-accounts",
+            "label": "The two accounts are different",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "distinct-tenants",
+            "label": "The accounts belong to different tenants",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "resource-document",
+            "label": "Private document: freshly created with the observed owner and tenant",
+            "passed": true
+          },
+          {
+            "id": "witness-fresh-marker-leaked",
+            "label": "Other tenant reads this run’s exact marker",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "witness-owner-preserved",
+            "label": "Returned resource still belongs to the owner",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          }
+        ],
+        "identities": {
+          "owner": {
+            "id": "[actors.owner.id]",
+            "tenant": "[actors.owner.tenant]",
+            "role": "member"
+          },
+          "researcher": {
+            "id": "[actors.researcher.id]",
+            "tenant": "[actors.researcher.tenant]",
+            "role": "member"
+          }
+        },
+        "requests": 9,
+        "cleanupErrors": [],
+        "setup": "created_this_run",
+        "finishedAt": "2026-11-10T18:14:12.799Z"
+      }
+    },
+    {
+      "tool": "hurl",
+      "mode": "vulnerable",
+      "authMode": "cookie",
+      "pair": 1,
+      "expectedVerdict": "reproduced",
+      "observedVerdict": "reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "base API origin",
+        "owner account credential",
+        "researcher account credential",
+        "fresh marker"
+      ],
+      "requestCount": 7,
+      "recipe": "violation",
+      "exitCode": 0,
+      "statuses": [
+        200,
+        200,
+        200,
+        201,
+        200,
+        200,
+        200
+      ],
+      "stderr": "Success [PROJECT]\\.reprocase\\benchmark-recipes\\vulnerable-cookie.hurl (7 request(s) in 2 ms)\n--------------------------------------------------------------------------------\nExecuted files:    1\nExecuted requests: 7 (1750.0/s)\nSucceeded files:   1 (100.0%)\nFailed files:      0 (0.0%)\nDuration:          4 ms (0h:0m:0s:4ms)\n\n"
+    },
+    {
+      "tool": "reprocase",
+      "mode": "vulnerable",
+      "authMode": "cookie",
+      "pair": 2,
+      "expectedVerdict": "reproduced",
+      "observedVerdict": "reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "api origin",
+        "owner account credential",
+        "researcher account credential"
+      ],
+      "requestCount": 9,
+      "code": "witness_observed",
+      "evidence": {
+        "schemaVersion": 1,
+        "id": "90ba7986-11f4-4837-8507-9b36e2839b21",
+        "caseId": "benchmark-cross-tenant",
+        "caseRevision": 1,
+        "state": "completed",
+        "verdict": "reproduced",
+        "reason": "The declared access boundary was crossed with this run’s fresh resource and verified accounts",
+        "code": "witness_observed",
+        "startedAt": "2026-11-10T18:14:12.850Z",
+        "steps": [
+          {
+            "id": "identity-owner-0",
+            "label": "Verify Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.851Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "118",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.852Z"
+          },
+          {
+            "id": "identity-researcher-1",
+            "label": "Verify Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.852Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "125",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.853Z"
+          },
+          {
+            "id": "csrf",
+            "label": "Get the owner’s current CSRF token",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.853Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/csrf"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "csrf": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.854Z"
+          },
+          {
+            "id": "create-document",
+            "label": "Create a fresh private document",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.854Z",
+            "checks": [
+              {
+                "id": "private-document",
+                "label": "The new document is private",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "url": "http://127.0.0.1:53572/documents",
+              "body": {
+                "title": "ReproCase controlled test document",
+                "marker": "[run.marker]"
+              }
+            },
+            "response": {
+              "status": 201,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.855Z"
+          },
+          {
+            "id": "owner-read",
+            "label": "Confirm the owner can read the marker",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.855Z",
+            "checks": [
+              {
+                "id": "owner-marker",
+                "label": "Owner reads this run’s marker",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.856Z"
+          },
+          {
+            "id": "recheck-owner-5",
+            "label": "Recheck Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.856Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "118",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.857Z"
+          },
+          {
+            "id": "recheck-researcher-6",
+            "label": "Recheck Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.857Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "125",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.857Z"
+          },
+          {
+            "id": "cross-tenant-read",
+            "label": "Read the same document as the other tenant",
+            "actor": "researcher",
+            "phase": "probe",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.857Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.858Z"
+          },
+          {
+            "id": "remove-document",
+            "label": "Remove the document created by this run",
+            "actor": "owner",
+            "phase": "cleanup",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.858Z",
+            "checks": [],
+            "request": {
+              "method": "DELETE",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "16",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "deleted": true
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.859Z"
+          }
+        ],
+        "checks": [
+          {
+            "id": "distinct-accounts",
+            "label": "The two accounts are different",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "distinct-tenants",
+            "label": "The accounts belong to different tenants",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "resource-document",
+            "label": "Private document: freshly created with the observed owner and tenant",
+            "passed": true
+          },
+          {
+            "id": "witness-fresh-marker-leaked",
+            "label": "Other tenant reads this run’s exact marker",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "witness-owner-preserved",
+            "label": "Returned resource still belongs to the owner",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          }
+        ],
+        "identities": {
+          "owner": {
+            "id": "[actors.owner.id]",
+            "tenant": "[actors.owner.tenant]",
+            "role": "member"
+          },
+          "researcher": {
+            "id": "[actors.researcher.id]",
+            "tenant": "[actors.researcher.tenant]",
+            "role": "member"
+          }
+        },
+        "requests": 9,
+        "cleanupErrors": [],
+        "setup": "created_this_run",
+        "finishedAt": "2026-11-10T18:14:12.859Z"
+      }
+    },
+    {
+      "tool": "hurl",
+      "mode": "vulnerable",
+      "authMode": "cookie",
+      "pair": 2,
+      "expectedVerdict": "reproduced",
+      "observedVerdict": "reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "base API origin",
+        "owner account credential",
+        "researcher account credential",
+        "fresh marker"
+      ],
+      "requestCount": 7,
+      "recipe": "violation",
+      "exitCode": 0,
+      "statuses": [
+        200,
+        200,
+        200,
+        201,
+        200,
+        200,
+        200
+      ],
+      "stderr": "Success [PROJECT]\\.reprocase\\benchmark-recipes\\vulnerable-cookie.hurl (7 request(s) in 2 ms)\n--------------------------------------------------------------------------------\nExecuted files:    1\nExecuted requests: 7 (2333.3/s)\nSucceeded files:   1 (100.0%)\nFailed files:      0 (0.0%)\nDuration:          3 ms (0h:0m:0s:3ms)\n\n"
+    },
+    {
+      "tool": "reprocase",
+      "mode": "vulnerable",
+      "authMode": "bearer",
+      "pair": 1,
+      "expectedVerdict": "reproduced",
+      "observedVerdict": "reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "api origin",
+        "owner account credential",
+        "researcher account credential"
+      ],
+      "requestCount": 9,
+      "code": "witness_observed",
+      "evidence": {
+        "schemaVersion": 1,
+        "id": "3af04e87-68cb-4fd3-a368-0e06fdd11fe9",
+        "caseId": "benchmark-cross-tenant",
+        "caseRevision": 1,
+        "state": "completed",
+        "verdict": "reproduced",
+        "reason": "The declared access boundary was crossed with this run’s fresh resource and verified accounts",
+        "code": "witness_observed",
+        "startedAt": "2026-11-10T18:14:12.895Z",
+        "steps": [
+          {
+            "id": "identity-owner-0",
+            "label": "Verify Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.896Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "118",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.897Z"
+          },
+          {
+            "id": "identity-researcher-1",
+            "label": "Verify Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.897Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "125",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.898Z"
+          },
+          {
+            "id": "csrf",
+            "label": "Get the owner’s current CSRF token",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.898Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/csrf"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "csrf": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.899Z"
+          },
+          {
+            "id": "create-document",
+            "label": "Create a fresh private document",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.899Z",
+            "checks": [
+              {
+                "id": "private-document",
+                "label": "The new document is private",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "url": "http://127.0.0.1:53572/documents",
+              "body": {
+                "title": "ReproCase controlled test document",
+                "marker": "[run.marker]"
+              }
+            },
+            "response": {
+              "status": 201,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.900Z"
+          },
+          {
+            "id": "owner-read",
+            "label": "Confirm the owner can read the marker",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.900Z",
+            "checks": [
+              {
+                "id": "owner-marker",
+                "label": "Owner reads this run’s marker",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.901Z"
+          },
+          {
+            "id": "recheck-owner-5",
+            "label": "Recheck Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.901Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "118",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.902Z"
+          },
+          {
+            "id": "recheck-researcher-6",
+            "label": "Recheck Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.902Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "125",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.902Z"
+          },
+          {
+            "id": "cross-tenant-read",
+            "label": "Read the same document as the other tenant",
+            "actor": "researcher",
+            "phase": "probe",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.902Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.903Z"
+          },
+          {
+            "id": "remove-document",
+            "label": "Remove the document created by this run",
+            "actor": "owner",
+            "phase": "cleanup",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.903Z",
+            "checks": [],
+            "request": {
+              "method": "DELETE",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "16",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "deleted": true
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.904Z"
+          }
+        ],
+        "checks": [
+          {
+            "id": "distinct-accounts",
+            "label": "The two accounts are different",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "distinct-tenants",
+            "label": "The accounts belong to different tenants",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "resource-document",
+            "label": "Private document: freshly created with the observed owner and tenant",
+            "passed": true
+          },
+          {
+            "id": "witness-fresh-marker-leaked",
+            "label": "Other tenant reads this run’s exact marker",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "witness-owner-preserved",
+            "label": "Returned resource still belongs to the owner",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          }
+        ],
+        "identities": {
+          "owner": {
+            "id": "[actors.owner.id]",
+            "tenant": "[actors.owner.tenant]",
+            "role": "member"
+          },
+          "researcher": {
+            "id": "[actors.researcher.id]",
+            "tenant": "[actors.researcher.tenant]",
+            "role": "member"
+          }
+        },
+        "requests": 9,
+        "cleanupErrors": [],
+        "setup": "created_this_run",
+        "finishedAt": "2026-11-10T18:14:12.904Z"
+      }
+    },
+    {
+      "tool": "hurl",
+      "mode": "vulnerable",
+      "authMode": "bearer",
+      "pair": 1,
+      "expectedVerdict": "reproduced",
+      "observedVerdict": "reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "base API origin",
+        "owner account credential",
+        "researcher account credential",
+        "fresh marker"
+      ],
+      "requestCount": 7,
+      "recipe": "violation",
+      "exitCode": 0,
+      "statuses": [
+        200,
+        200,
+        200,
+        201,
+        200,
+        200,
+        200
+      ],
+      "stderr": "Success [PROJECT]\\.reprocase\\benchmark-recipes\\vulnerable-bearer.hurl (7 request(s) in 2 ms)\n--------------------------------------------------------------------------------\nExecuted files:    1\nExecuted requests: 7 (875.0/s)\nSucceeded files:   1 (100.0%)\nFailed files:      0 (0.0%)\nDuration:          8 ms (0h:0m:0s:8ms)\n\n"
+    },
+    {
+      "tool": "reprocase",
+      "mode": "vulnerable",
+      "authMode": "bearer",
+      "pair": 2,
+      "expectedVerdict": "reproduced",
+      "observedVerdict": "reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "api origin",
+        "owner account credential",
+        "researcher account credential"
+      ],
+      "requestCount": 9,
+      "code": "witness_observed",
+      "evidence": {
+        "schemaVersion": 1,
+        "id": "7fbd5f47-a9b4-4337-b1f1-6ac4f85c944a",
+        "caseId": "benchmark-cross-tenant",
+        "caseRevision": 1,
+        "state": "completed",
+        "verdict": "reproduced",
+        "reason": "The declared access boundary was crossed with this run’s fresh resource and verified accounts",
+        "code": "witness_observed",
+        "startedAt": "2026-11-10T18:14:12.941Z",
+        "steps": [
+          {
+            "id": "identity-owner-0",
+            "label": "Verify Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.941Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "118",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.943Z"
+          },
+          {
+            "id": "identity-researcher-1",
+            "label": "Verify Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.943Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "125",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.944Z"
+          },
+          {
+            "id": "csrf",
+            "label": "Get the owner’s current CSRF token",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.944Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/csrf"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "csrf": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.945Z"
+          },
+          {
+            "id": "create-document",
+            "label": "Create a fresh private document",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.945Z",
+            "checks": [
+              {
+                "id": "private-document",
+                "label": "The new document is private",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "url": "http://127.0.0.1:53572/documents",
+              "body": {
+                "title": "ReproCase controlled test document",
+                "marker": "[run.marker]"
+              }
+            },
+            "response": {
+              "status": 201,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.945Z"
+          },
+          {
+            "id": "owner-read",
+            "label": "Confirm the owner can read the marker",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.945Z",
+            "checks": [
+              {
+                "id": "owner-marker",
+                "label": "Owner reads this run’s marker",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.946Z"
+          },
+          {
+            "id": "recheck-owner-5",
+            "label": "Recheck Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.946Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "118",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.947Z"
+          },
+          {
+            "id": "recheck-researcher-6",
+            "label": "Recheck Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.947Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "125",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.948Z"
+          },
+          {
+            "id": "cross-tenant-read",
+            "label": "Read the same document as the other tenant",
+            "actor": "researcher",
+            "phase": "probe",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.948Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.948Z"
+          },
+          {
+            "id": "remove-document",
+            "label": "Remove the document created by this run",
+            "actor": "owner",
+            "phase": "cleanup",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.948Z",
+            "checks": [],
+            "request": {
+              "method": "DELETE",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "16",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "deleted": true
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.949Z"
+          }
+        ],
+        "checks": [
+          {
+            "id": "distinct-accounts",
+            "label": "The two accounts are different",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "distinct-tenants",
+            "label": "The accounts belong to different tenants",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "resource-document",
+            "label": "Private document: freshly created with the observed owner and tenant",
+            "passed": true
+          },
+          {
+            "id": "witness-fresh-marker-leaked",
+            "label": "Other tenant reads this run’s exact marker",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "witness-owner-preserved",
+            "label": "Returned resource still belongs to the owner",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          }
+        ],
+        "identities": {
+          "owner": {
+            "id": "[actors.owner.id]",
+            "tenant": "[actors.owner.tenant]",
+            "role": "member"
+          },
+          "researcher": {
+            "id": "[actors.researcher.id]",
+            "tenant": "[actors.researcher.tenant]",
+            "role": "member"
+          }
+        },
+        "requests": 9,
+        "cleanupErrors": [],
+        "setup": "created_this_run",
+        "finishedAt": "2026-11-10T18:14:12.949Z"
+      }
+    },
+    {
+      "tool": "hurl",
+      "mode": "vulnerable",
+      "authMode": "bearer",
+      "pair": 2,
+      "expectedVerdict": "reproduced",
+      "observedVerdict": "reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "base API origin",
+        "owner account credential",
+        "researcher account credential",
+        "fresh marker"
+      ],
+      "requestCount": 7,
+      "recipe": "violation",
+      "exitCode": 0,
+      "statuses": [
+        200,
+        200,
+        200,
+        201,
+        200,
+        200,
+        200
+      ],
+      "stderr": "Success [PROJECT]\\.reprocase\\benchmark-recipes\\vulnerable-bearer.hurl (7 request(s) in 3 ms)\n--------------------------------------------------------------------------------\nExecuted files:    1\nExecuted requests: 7 (1750.0/s)\nSucceeded files:   1 (100.0%)\nFailed files:      0 (0.0%)\nDuration:          4 ms (0h:0m:0s:4ms)\n\n"
+    },
+    {
+      "tool": "reprocase",
+      "mode": "secure",
+      "authMode": "cookie",
+      "pair": 1,
+      "expectedVerdict": "not_reproduced",
+      "observedVerdict": "not_reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "api origin",
+        "owner account credential",
+        "researcher account credential"
+      ],
+      "requestCount": 9,
+      "code": "rejection_observed",
+      "evidence": {
+        "schemaVersion": 1,
+        "id": "d24e1d98-677d-4939-af10-590e0e023b4a",
+        "caseId": "benchmark-cross-tenant",
+        "caseRevision": 1,
+        "state": "completed",
+        "verdict": "not_reproduced",
+        "reason": "Prerequisites were verified and the declared rejection behavior was observed",
+        "code": "rejection_observed",
+        "startedAt": "2026-11-10T18:14:12.988Z",
+        "steps": [
+          {
+            "id": "identity-owner-0",
+            "label": "Verify Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.989Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "119",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.990Z"
+          },
+          {
+            "id": "identity-researcher-1",
+            "label": "Verify Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.990Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "126",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.991Z"
+          },
+          {
+            "id": "csrf",
+            "label": "Get the owner’s current CSRF token",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.991Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/csrf"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "csrf": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.992Z"
+          },
+          {
+            "id": "create-document",
+            "label": "Create a fresh private document",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.992Z",
+            "checks": [
+              {
+                "id": "private-document",
+                "label": "The new document is private",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "url": "http://127.0.0.1:53572/documents",
+              "body": {
+                "title": "ReproCase controlled test document",
+                "marker": "[run.marker]"
+              }
+            },
+            "response": {
+              "status": 201,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.992Z"
+          },
+          {
+            "id": "owner-read",
+            "label": "Confirm the owner can read the marker",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.992Z",
+            "checks": [
+              {
+                "id": "owner-marker",
+                "label": "Owner reads this run’s marker",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.993Z"
+          },
+          {
+            "id": "recheck-owner-5",
+            "label": "Recheck Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.993Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "119",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.994Z"
+          },
+          {
+            "id": "recheck-researcher-6",
+            "label": "Recheck Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.994Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "126",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.994Z"
+          },
+          {
+            "id": "cross-tenant-read",
+            "label": "Read the same document as the other tenant",
+            "actor": "researcher",
+            "phase": "probe",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.994Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 403,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "error": "Private document: owner access only"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.995Z"
+          },
+          {
+            "id": "remove-document",
+            "label": "Remove the document created by this run",
+            "actor": "owner",
+            "phase": "cleanup",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:12.995Z",
+            "checks": [],
+            "request": {
+              "method": "DELETE",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "16",
+                "date": "Tue, 10 Nov 2026 18:14:12 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "deleted": true
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:12.996Z"
+          }
+        ],
+        "checks": [
+          {
+            "id": "distinct-accounts",
+            "label": "The two accounts are different",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "distinct-tenants",
+            "label": "The accounts belong to different tenants",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "resource-document",
+            "label": "Private document: freshly created with the observed owner and tenant",
+            "passed": true
+          },
+          {
+            "id": "witness-fresh-marker-leaked",
+            "label": "Other tenant reads this run’s exact marker",
+            "passed": false,
+            "detail": "Required observation is unavailable"
+          },
+          {
+            "id": "witness-owner-preserved",
+            "label": "Returned resource still belongs to the owner",
+            "passed": false,
+            "detail": "Required observation is unavailable"
+          }
+        ],
+        "identities": {
+          "owner": {
+            "id": "[actors.owner.id]",
+            "tenant": "[actors.owner.tenant]",
+            "role": "member"
+          },
+          "researcher": {
+            "id": "[actors.researcher.id]",
+            "tenant": "[actors.researcher.tenant]",
+            "role": "member"
+          }
+        },
+        "requests": 9,
+        "cleanupErrors": [],
+        "setup": "created_this_run",
+        "finishedAt": "2026-11-10T18:14:12.996Z"
+      }
+    },
+    {
+      "tool": "hurl",
+      "mode": "secure",
+      "authMode": "cookie",
+      "pair": 1,
+      "expectedVerdict": "not_reproduced",
+      "observedVerdict": "not_reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "base API origin",
+        "owner account credential",
+        "researcher account credential",
+        "fresh marker"
+      ],
+      "requestCount": 7,
+      "recipe": "denial",
+      "exitCode": 0,
+      "statuses": [
+        200,
+        200,
+        200,
+        201,
+        200,
+        403,
+        200
+      ],
+      "stderr": "Success [PROJECT]\\.reprocase\\benchmark-recipes\\secure-cookie.hurl (7 request(s) in 2 ms)\n--------------------------------------------------------------------------------\nExecuted files:    1\nExecuted requests: 7 (2333.3/s)\nSucceeded files:   1 (100.0%)\nFailed files:      0 (0.0%)\nDuration:          3 ms (0h:0m:0s:3ms)\n\n"
+    },
+    {
+      "tool": "reprocase",
+      "mode": "secure",
+      "authMode": "cookie",
+      "pair": 2,
+      "expectedVerdict": "not_reproduced",
+      "observedVerdict": "not_reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "api origin",
+        "owner account credential",
+        "researcher account credential"
+      ],
+      "requestCount": 9,
+      "code": "rejection_observed",
+      "evidence": {
+        "schemaVersion": 1,
+        "id": "21123f89-6305-435f-a7af-95b0f496943c",
+        "caseId": "benchmark-cross-tenant",
+        "caseRevision": 1,
+        "state": "completed",
+        "verdict": "not_reproduced",
+        "reason": "Prerequisites were verified and the declared rejection behavior was observed",
+        "code": "rejection_observed",
+        "startedAt": "2026-11-10T18:14:13.035Z",
+        "steps": [
+          {
+            "id": "identity-owner-0",
+            "label": "Verify Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.035Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "119",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.036Z"
+          },
+          {
+            "id": "identity-researcher-1",
+            "label": "Verify Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.036Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "126",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.037Z"
+          },
+          {
+            "id": "csrf",
+            "label": "Get the owner’s current CSRF token",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.037Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/csrf"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "csrf": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.038Z"
+          },
+          {
+            "id": "create-document",
+            "label": "Create a fresh private document",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.038Z",
+            "checks": [
+              {
+                "id": "private-document",
+                "label": "The new document is private",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "url": "http://127.0.0.1:53572/documents",
+              "body": {
+                "title": "ReproCase controlled test document",
+                "marker": "[run.marker]"
+              }
+            },
+            "response": {
+              "status": 201,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.039Z"
+          },
+          {
+            "id": "owner-read",
+            "label": "Confirm the owner can read the marker",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.039Z",
+            "checks": [
+              {
+                "id": "owner-marker",
+                "label": "Owner reads this run’s marker",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.039Z"
+          },
+          {
+            "id": "recheck-owner-5",
+            "label": "Recheck Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.039Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "119",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.040Z"
+          },
+          {
+            "id": "recheck-researcher-6",
+            "label": "Recheck Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.040Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "126",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.040Z"
+          },
+          {
+            "id": "cross-tenant-read",
+            "label": "Read the same document as the other tenant",
+            "actor": "researcher",
+            "phase": "probe",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.040Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 403,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "error": "Private document: owner access only"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.041Z"
+          },
+          {
+            "id": "remove-document",
+            "label": "Remove the document created by this run",
+            "actor": "owner",
+            "phase": "cleanup",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.041Z",
+            "checks": [],
+            "request": {
+              "method": "DELETE",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "16",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "deleted": true
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.042Z"
+          }
+        ],
+        "checks": [
+          {
+            "id": "distinct-accounts",
+            "label": "The two accounts are different",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "distinct-tenants",
+            "label": "The accounts belong to different tenants",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "resource-document",
+            "label": "Private document: freshly created with the observed owner and tenant",
+            "passed": true
+          },
+          {
+            "id": "witness-fresh-marker-leaked",
+            "label": "Other tenant reads this run’s exact marker",
+            "passed": false,
+            "detail": "Required observation is unavailable"
+          },
+          {
+            "id": "witness-owner-preserved",
+            "label": "Returned resource still belongs to the owner",
+            "passed": false,
+            "detail": "Required observation is unavailable"
+          }
+        ],
+        "identities": {
+          "owner": {
+            "id": "[actors.owner.id]",
+            "tenant": "[actors.owner.tenant]",
+            "role": "member"
+          },
+          "researcher": {
+            "id": "[actors.researcher.id]",
+            "tenant": "[actors.researcher.tenant]",
+            "role": "member"
+          }
+        },
+        "requests": 9,
+        "cleanupErrors": [],
+        "setup": "created_this_run",
+        "finishedAt": "2026-11-10T18:14:13.042Z"
+      }
+    },
+    {
+      "tool": "hurl",
+      "mode": "secure",
+      "authMode": "cookie",
+      "pair": 2,
+      "expectedVerdict": "not_reproduced",
+      "observedVerdict": "not_reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "base API origin",
+        "owner account credential",
+        "researcher account credential",
+        "fresh marker"
+      ],
+      "requestCount": 7,
+      "recipe": "denial",
+      "exitCode": 0,
+      "statuses": [
+        200,
+        200,
+        200,
+        201,
+        200,
+        403,
+        200
+      ],
+      "stderr": "Success [PROJECT]\\.reprocase\\benchmark-recipes\\secure-cookie.hurl (7 request(s) in 1 ms)\n--------------------------------------------------------------------------------\nExecuted files:    1\nExecuted requests: 7 (2333.3/s)\nSucceeded files:   1 (100.0%)\nFailed files:      0 (0.0%)\nDuration:          3 ms (0h:0m:0s:3ms)\n\n"
+    },
+    {
+      "tool": "reprocase",
+      "mode": "secure",
+      "authMode": "bearer",
+      "pair": 1,
+      "expectedVerdict": "not_reproduced",
+      "observedVerdict": "not_reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "api origin",
+        "owner account credential",
+        "researcher account credential"
+      ],
+      "requestCount": 9,
+      "code": "rejection_observed",
+      "evidence": {
+        "schemaVersion": 1,
+        "id": "6bf326f1-82f9-49fc-95d0-526ae8a973b3",
+        "caseId": "benchmark-cross-tenant",
+        "caseRevision": 1,
+        "state": "completed",
+        "verdict": "not_reproduced",
+        "reason": "Prerequisites were verified and the declared rejection behavior was observed",
+        "code": "rejection_observed",
+        "startedAt": "2026-11-10T18:14:13.081Z",
+        "steps": [
+          {
+            "id": "identity-owner-0",
+            "label": "Verify Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.081Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "119",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.082Z"
+          },
+          {
+            "id": "identity-researcher-1",
+            "label": "Verify Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.082Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "126",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.083Z"
+          },
+          {
+            "id": "csrf",
+            "label": "Get the owner’s current CSRF token",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.083Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/csrf"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "csrf": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.084Z"
+          },
+          {
+            "id": "create-document",
+            "label": "Create a fresh private document",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.084Z",
+            "checks": [
+              {
+                "id": "private-document",
+                "label": "The new document is private",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "url": "http://127.0.0.1:53572/documents",
+              "body": {
+                "title": "ReproCase controlled test document",
+                "marker": "[run.marker]"
+              }
+            },
+            "response": {
+              "status": 201,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.085Z"
+          },
+          {
+            "id": "owner-read",
+            "label": "Confirm the owner can read the marker",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.085Z",
+            "checks": [
+              {
+                "id": "owner-marker",
+                "label": "Owner reads this run’s marker",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.085Z"
+          },
+          {
+            "id": "recheck-owner-5",
+            "label": "Recheck Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.085Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "119",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.086Z"
+          },
+          {
+            "id": "recheck-researcher-6",
+            "label": "Recheck Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.086Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "126",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.087Z"
+          },
+          {
+            "id": "cross-tenant-read",
+            "label": "Read the same document as the other tenant",
+            "actor": "researcher",
+            "phase": "probe",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.087Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 403,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "error": "Private document: owner access only"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.087Z"
+          },
+          {
+            "id": "remove-document",
+            "label": "Remove the document created by this run",
+            "actor": "owner",
+            "phase": "cleanup",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.087Z",
+            "checks": [],
+            "request": {
+              "method": "DELETE",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "16",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "deleted": true
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.088Z"
+          }
+        ],
+        "checks": [
+          {
+            "id": "distinct-accounts",
+            "label": "The two accounts are different",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "distinct-tenants",
+            "label": "The accounts belong to different tenants",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "resource-document",
+            "label": "Private document: freshly created with the observed owner and tenant",
+            "passed": true
+          },
+          {
+            "id": "witness-fresh-marker-leaked",
+            "label": "Other tenant reads this run’s exact marker",
+            "passed": false,
+            "detail": "Required observation is unavailable"
+          },
+          {
+            "id": "witness-owner-preserved",
+            "label": "Returned resource still belongs to the owner",
+            "passed": false,
+            "detail": "Required observation is unavailable"
+          }
+        ],
+        "identities": {
+          "owner": {
+            "id": "[actors.owner.id]",
+            "tenant": "[actors.owner.tenant]",
+            "role": "member"
+          },
+          "researcher": {
+            "id": "[actors.researcher.id]",
+            "tenant": "[actors.researcher.tenant]",
+            "role": "member"
+          }
+        },
+        "requests": 9,
+        "cleanupErrors": [],
+        "setup": "created_this_run",
+        "finishedAt": "2026-11-10T18:14:13.088Z"
+      }
+    },
+    {
+      "tool": "hurl",
+      "mode": "secure",
+      "authMode": "bearer",
+      "pair": 1,
+      "expectedVerdict": "not_reproduced",
+      "observedVerdict": "not_reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "base API origin",
+        "owner account credential",
+        "researcher account credential",
+        "fresh marker"
+      ],
+      "requestCount": 7,
+      "recipe": "denial",
+      "exitCode": 0,
+      "statuses": [
+        200,
+        200,
+        200,
+        201,
+        200,
+        403,
+        200
+      ],
+      "stderr": "Success [PROJECT]\\.reprocase\\benchmark-recipes\\secure-bearer.hurl (7 request(s) in 2 ms)\n--------------------------------------------------------------------------------\nExecuted files:    1\nExecuted requests: 7 (2333.3/s)\nSucceeded files:   1 (100.0%)\nFailed files:      0 (0.0%)\nDuration:          3 ms (0h:0m:0s:3ms)\n\n"
+    },
+    {
+      "tool": "reprocase",
+      "mode": "secure",
+      "authMode": "bearer",
+      "pair": 2,
+      "expectedVerdict": "not_reproduced",
+      "observedVerdict": "not_reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "api origin",
+        "owner account credential",
+        "researcher account credential"
+      ],
+      "requestCount": 9,
+      "code": "rejection_observed",
+      "evidence": {
+        "schemaVersion": 1,
+        "id": "332a4140-40ed-4485-81cb-125dd03a7e48",
+        "caseId": "benchmark-cross-tenant",
+        "caseRevision": 1,
+        "state": "completed",
+        "verdict": "not_reproduced",
+        "reason": "Prerequisites were verified and the declared rejection behavior was observed",
+        "code": "rejection_observed",
+        "startedAt": "2026-11-10T18:14:13.127Z",
+        "steps": [
+          {
+            "id": "identity-owner-0",
+            "label": "Verify Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.127Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "119",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.128Z"
+          },
+          {
+            "id": "identity-researcher-1",
+            "label": "Verify Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.128Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "126",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.129Z"
+          },
+          {
+            "id": "csrf",
+            "label": "Get the owner’s current CSRF token",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.129Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/csrf"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "csrf": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.130Z"
+          },
+          {
+            "id": "create-document",
+            "label": "Create a fresh private document",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.130Z",
+            "checks": [
+              {
+                "id": "private-document",
+                "label": "The new document is private",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "url": "http://127.0.0.1:53572/documents",
+              "body": {
+                "title": "ReproCase controlled test document",
+                "marker": "[run.marker]"
+              }
+            },
+            "response": {
+              "status": 201,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.131Z"
+          },
+          {
+            "id": "owner-read",
+            "label": "Confirm the owner can read the marker",
+            "actor": "owner",
+            "phase": "prepare",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.131Z",
+            "checks": [
+              {
+                "id": "owner-marker",
+                "label": "Owner reads this run’s marker",
+                "passed": true,
+                "detail": "Observed condition satisfied"
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "238",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[captures.documentId]",
+                "ownerId": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "marker": "[run.marker]",
+                "title": "ReproCase controlled test document",
+                "visibility": "private"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.131Z"
+          },
+          {
+            "id": "recheck-owner-5",
+            "label": "Recheck Resource owner",
+            "phase": "identity",
+            "actor": "owner",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.132Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "119",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.owner.id]",
+                "tenant": "[actors.owner.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.132Z"
+          },
+          {
+            "id": "recheck-researcher-6",
+            "label": "Recheck Researcher",
+            "phase": "identity",
+            "actor": "researcher",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.132Z",
+            "checks": [
+              {
+                "id": "identity-observed",
+                "label": "Identity observed from the live API",
+                "passed": true
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/me"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "126",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "id": "[actors.researcher.id]",
+                "tenant": "[actors.researcher.tenant]",
+                "role": "member",
+                "email": "[REDACTED]"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.133Z"
+          },
+          {
+            "id": "cross-tenant-read",
+            "label": "Read the same document as the other tenant",
+            "actor": "researcher",
+            "phase": "probe",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.133Z",
+            "checks": [],
+            "request": {
+              "method": "GET",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 403,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "47",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "error": "Private document: owner access only"
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.134Z"
+          },
+          {
+            "id": "remove-document",
+            "label": "Remove the document created by this run",
+            "actor": "owner",
+            "phase": "cleanup",
+            "status": "passed",
+            "startedAt": "2026-11-10T18:14:13.134Z",
+            "checks": [],
+            "request": {
+              "method": "DELETE",
+              "url": "http://127.0.0.1:53572/documents/[captures.documentId]"
+            },
+            "response": {
+              "status": 200,
+              "headers": {
+                "content-type": "application/json; charset=utf-8",
+                "content-length": "16",
+                "date": "Tue, 10 Nov 2026 18:14:13 GMT",
+                "connection": "keep-alive",
+                "keep-alive": "timeout=72"
+              },
+              "body": {
+                "deleted": true
+              }
+            },
+            "finishedAt": "2026-11-10T18:14:13.134Z"
+          }
+        ],
+        "checks": [
+          {
+            "id": "distinct-accounts",
+            "label": "The two accounts are different",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "distinct-tenants",
+            "label": "The accounts belong to different tenants",
+            "passed": true,
+            "detail": "Observed condition satisfied"
+          },
+          {
+            "id": "resource-document",
+            "label": "Private document: freshly created with the observed owner and tenant",
+            "passed": true
+          },
+          {
+            "id": "witness-fresh-marker-leaked",
+            "label": "Other tenant reads this run’s exact marker",
+            "passed": false,
+            "detail": "Required observation is unavailable"
+          },
+          {
+            "id": "witness-owner-preserved",
+            "label": "Returned resource still belongs to the owner",
+            "passed": false,
+            "detail": "Required observation is unavailable"
+          }
+        ],
+        "identities": {
+          "owner": {
+            "id": "[actors.owner.id]",
+            "tenant": "[actors.owner.tenant]",
+            "role": "member"
+          },
+          "researcher": {
+            "id": "[actors.researcher.id]",
+            "tenant": "[actors.researcher.tenant]",
+            "role": "member"
+          }
+        },
+        "requests": 9,
+        "cleanupErrors": [],
+        "setup": "created_this_run",
+        "finishedAt": "2026-11-10T18:14:13.134Z"
+      }
+    },
+    {
+      "tool": "hurl",
+      "mode": "secure",
+      "authMode": "bearer",
+      "pair": 2,
+      "expectedVerdict": "not_reproduced",
+      "observedVerdict": "not_reproduced",
+      "passed": true,
+      "identitiesFresh": true,
+      "identitiesDistinct": true,
+      "tenantsDistinct": true,
+      "templateUnchanged": true,
+      "cleanupConfirmed": true,
+      "resourceWrites": 2,
+      "manualTemplateEdits": 0,
+      "suppliedBindings": [
+        "base API origin",
+        "owner account credential",
+        "researcher account credential",
+        "fresh marker"
+      ],
+      "requestCount": 7,
+      "recipe": "denial",
+      "exitCode": 0,
+      "statuses": [
+        200,
+        200,
+        200,
+        201,
+        200,
+        403,
+        200
+      ],
+      "stderr": "Success [PROJECT]\\.reprocase\\benchmark-recipes\\secure-bearer.hurl (7 request(s) in 2 ms)\n--------------------------------------------------------------------------------\nExecuted files:    1\nExecuted requests: 7 (2333.3/s)\nSucceeded files:   1 (100.0%)\nFailed files:      0 (0.0%)\nDuration:          3 ms (0h:0m:0s:3ms)\n\n"
+    }
+  ]
+}

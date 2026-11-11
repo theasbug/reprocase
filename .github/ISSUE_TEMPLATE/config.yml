@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Private security report
+    url: https://github.com/theasbug/reprocase/security/advisories/new
+    about: Report a vulnerability in ReproCase privately. Keep secrets out of public issues.
+  - name: User guide / Kullanım kılavuzu
+    url: https://github.com/theasbug/reprocase#documentation-and-community
+    about: Start with the English or Turkish guide and the local demo.

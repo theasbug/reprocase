@@ -1,0 +1,23 @@
+{
+  "title": "Guided private document access",
+  "policy": "A private document may only be read or changed by its owner, including across tenant boundaries.",
+  "kind": "read",
+  "boundary": "cross_tenant",
+  "identityPath": "/me",
+  "idPointer": "/id",
+  "tenantPointer": "/tenant",
+  "rolePointer": "/role",
+  "expectedRole": "member",
+  "createPath": "/documents",
+  "createBody": { "title": "Controlled test resource", "marker": "Controlled baseline" },
+  "idResponsePointer": "/id",
+  "ownerResponsePointer": "/ownerId",
+  "tenantResponsePointer": "/tenant",
+  "ownershipSource": "creation",
+  "readPath": "/documents/{resource}",
+  "markerRequestPointer": "/marker",
+  "markerResponsePointer": "/marker",
+  "csrf": { "path": "/csrf", "pointer": "/csrf", "header": "x-csrf-token" },
+  "cleanup": true,
+  "cleanupPath": "/documents/{resource}"
+}

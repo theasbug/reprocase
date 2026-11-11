@@ -1,0 +1,37 @@
+{
+  "testedAt": "2026-11-10T17:22:52.769Z",
+  "endpoint": "https://opencode.ai/inference/go/openai/v1",
+  "model": "longcat-2.5-free",
+  "requests": [
+    {
+      "path": "/inference/go/openai/v1/chat/completions",
+      "sessionHeader": true,
+      "userAgent": "reprocase/0.2.0",
+      "status": 200
+    },
+    {
+      "path": "/inference/go/openai/v1/chat/completions",
+      "sessionHeader": true,
+      "userAgent": "reprocase/0.2.0",
+      "status": 200
+    }
+  ],
+  "connection": {
+    "ok": true,
+    "provider": "compatible",
+    "model": "longcat-2.5-free",
+    "testedAt": "2026-11-10T17:22:55.176Z",
+    "routing": "opencode-session"
+  },
+  "proposal": {
+    "schemaValid": true,
+    "revisionPreserved": true,
+    "caseIdPreserved": true,
+    "validationErrors": [],
+    "sourceUnchanged": true,
+    "appliedAutomatically": false,
+    "warningCount": 1
+  },
+  "ok": true,
+  "elapsedMs": 28545
+}

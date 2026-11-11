@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="400" viewBox="0 0 1600 400" role="img" aria-labelledby="title desc">
+<title id="title">ReproCase</title><desc id="desc">Fresh accounts. Reproducible proofs. An open-source AI workbench for bug bounty research.</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#181a2d"/><stop offset="1" stop-color="#0b0d15"/></linearGradient></defs>
+<rect width="1600" height="400" rx="24" fill="url(#bg)"/><rect x="1" y="1" width="1598" height="398" rx="23" fill="none" stroke="#2b3043"/>
+<g font-family="Segoe UI,Arial,sans-serif">
+<text x="72" y="94" fill="#b9b0ff" font-size="32" font-weight="700" letter-spacing="-1">reprocase</text>
+<text x="72" y="185" fill="#f3f4fa" font-size="58" font-weight="700" letter-spacing="-2">Fresh accounts.</text>
+<text x="72" y="252" fill="#b9b0ff" font-size="58" font-weight="700" letter-spacing="-2">Reproducible proofs.</text>
+<text x="75" y="305" fill="#9ba4bc" font-size="23">AI workbench for bug bounty research.</text>
+<text x="75" y="359" fill="#6bd5ad" font-size="15" letter-spacing="2">OPEN SOURCE  /  LOCAL WORKSPACE  /  WINDOWS BETA</text>
+<g transform="translate(914 76)">
+<path d="M220 33h30v170h30" fill="none" stroke="#51466e" stroke-width="3"/>
+<rect width="220" height="78" rx="14" fill="#19272a" stroke="#315953"/><text x="24" y="33" fill="#6bd5ad" font-size="20" font-weight="600">Resource owner</text><text x="24" y="57" fill="#8fa7a4" font-size="15">Verified identity</text>
+<rect y="168" width="220" height="78" rx="14" fill="#211e33" stroke="#51466e"/><text x="24" y="201" fill="#b9b0ff" font-size="20" font-weight="600">Other account</text><text x="24" y="225" fill="#a49bb8" font-size="15">Separate session</text>
+<rect x="280" y="65" width="280" height="109" rx="14" fill="#151b27" stroke="#41485e"/><text x="301" y="103" fill="#e7e8ef" font-size="20" font-weight="600">Fresh private resource</text><text x="301" y="136" fill="#9ba4bc" font-size="16">New ID. New evidence marker.</text>
+<rect x="280" y="195" width="280" height="49" rx="12" fill="#182d29" stroke="#315953"/><path d="m301 219 6 6 11-13" stroke="#6bd5ad" stroke-width="2" fill="none"/><text x="332" y="225" fill="#6bd5ad" font-size="18" font-weight="600">Check the actual witness</text>
+</g></g></svg>

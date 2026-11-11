@@ -1,0 +1,24 @@
+{
+  "version": "0.3.0",
+  "testedAt": "2026-11-10T18:12:08.547Z",
+  "provider": "OpenCode Go",
+  "model": "longcat-2.5-free",
+  "requests": [
+    {
+      "path": "/inference/go/v1/models",
+      "sessionHeader": true,
+      "applicationAgent": true,
+      "status": 200
+    },
+    {
+      "path": "/inference/go/openai/v1/chat/completions",
+      "sessionHeader": true,
+      "applicationAgent": true,
+      "status": 429
+    }
+  ],
+  "discoveredModels": 30,
+  "reasoningMetadataModels": 22,
+  "ok": false,
+  "error": "Provider request failed (429): {\"error\":{\"type\":\"rate_limit_error\",\"message\":\"Rate limit exceeded. Please try again later.\"}}"
+}

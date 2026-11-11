@@ -1,0 +1,9 @@
+import { z } from 'zod';
+export interface AgentTool { name: string; description: string; inputSchema: Record<string, unknown>; }
+export interface Approval { id: string; sessionId: string; tool: string; input: unknown; reason: string; createdAt: string; }
+export interface AgentImage { data: string; mimeType: 'image/png'|'image/jpeg'|'image/webp'; evidenceId?: string; }
+export interface AgentToolOutput { text: string; images?: AgentImage[]; }
+export interface AgentRuntime { tools(): AgentTool[]; environment(): Record<string, unknown>; steer?(sessionId:string):void; execute(name: string, input: unknown, sessionId: string, signal: AbortSignal, approval: (request: Approval) => void): Promise<string|AgentToolOutput>; }
+export const mcpConfigSchema = z.strictObject({ id: z.string().regex(/^mcp-[0-9a-f-]{36}$/).optional(), name: z.string().trim().min(1).max(80), transport: z.enum(['stdio','http']), command: z.string().max(2000).optional(), args: z.array(z.string().max(4000)).max(100).default([]), cwd: z.string().max(2000).optional(), url: z.string().max(2000).optional(), env: z.record(z.string(),z.string().max(8000)).optional(), headers: z.record(z.string(),z.string().max(8000)).optional() }).superRefine((v,c)=>{if(v.transport==='stdio'&&!v.command)c.addIssue({code:'custom',path:['command'],message:'A stdio server needs a command'});if(v.transport==='http'&&!v.url)c.addIssue({code:'custom',path:['url'],message:'An HTTP server needs a URL'});});
+export type McpConfig = z.infer<typeof mcpConfigSchema>;
+export interface McpServerState { id: string; name: string; transport: 'stdio'|'http'; command?: string; args: string[]; cwd?: string; url?: string; hasCredentials: boolean; state: 'disconnected'|'connecting'|'connected'|'error'; error?: string; tools: { name: string; description: string }[]; }

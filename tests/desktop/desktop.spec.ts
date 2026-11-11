@@ -1,0 +1,71 @@
+import { test, expect, _electron, type ElectronApplication } from '@playwright/test';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { modelServer } from '../fixtures/model-server.ts';
+
+test('native Windows app: safe file attachment, encrypted provider save, session persistence and shared case runner', async () => {
+  const project = resolve('.'), work = resolve('../../work'); mkdirSync(work, { recursive: true });
+  const workspace = mkdtempSync(join(work, 'desktop-test-')), key = 'private-native-vault-key-for-test';
+  const filePath = join(workspace, 'plan.md'); writeFileSync(filePath, 'Selected plan: create fresh accounts and observe ownership.');
+  const provider = await modelServer(); let app: ElectronApplication | undefined;
+  const executablePath = process.env.REPROCASE_DESKTOP_EXE ?? join(project, 'node_modules/electron/dist/electron.exe');
+  const launch = () => _electron.launch({ executablePath, args: process.env.REPROCASE_DESKTOP_EXE ? [] : [project], cwd: project, env: { ...Object.fromEntries(Object.entries(process.env).filter(([name, value]) => name !== 'ELECTRON_RUN_AS_NODE' && value !== undefined)) as Record<string, string>, REPROCASE_HEADLESS: '1', REPROCASE_DESKTOP_WORKSPACE: workspace }, timeout: 30000 });
+  try {
+    app = await launch(); let page = await app.firstWindow();
+    await expect(page.locator('.assistant-toggle')).toHaveText('AI Assistant');
+    expect(await app.evaluate(({ BrowserWindow }) => { const p = (BrowserWindow.getAllWindows()[0].webContents as any).getLastWebPreferences(); return { sandbox: p.sandbox, isolated: p.contextIsolation, node: p.nodeIntegration }; })).toEqual({ sandbox: true, isolated: true, node: false });
+    expect(await page.evaluate(() => typeof (window as any).require)).toBe('undefined');
+    await page.locator('.assistant-toggle').click();
+    await expect(page.locator('.chat-empty h1')).toBeVisible();
+    await page.getByRole('button', { name: 'Connect your first provider', exact: true }).click();
+    let settings = page.getByRole('dialog', { name: 'Assistant settings' });
+    await expect(settings.getByLabel('API base URL', { exact: true })).toHaveCount(0);
+    await settings.getByRole('button', { name: 'Advanced', exact: true }).click();
+    await settings.getByLabel('API base URL', { exact: true }).fill(provider.baseURL);
+    await settings.getByLabel('API key', { exact: true }).fill(key);
+    await settings.getByRole('button', { name: 'Save & discover models', exact: true }).click();
+    await expect(settings.getByRole('status')).toContainText('1 models discovered');
+    await settings.getByRole('button', { name: 'Done', exact: true }).click();
+    await expect(page.getByTestId('model-picker')).toContainText('Local test model');
+    await app.evaluate(({ dialog }, path) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] }); }, filePath);
+    await page.getByRole('button', { name: 'Attach a text file', exact: true }).click();
+    await expect(page.locator('.composer-attachments')).toContainText('plan.md');
+    await page.getByLabel('Reasoning level', { exact: true }).selectOption('high');
+    await page.getByLabel('Message AI Assistant', { exact: true }).fill('Read the selected plan and suggest a next step.');
+    await page.getByTestId('send-chat').click();
+    await expect(page.locator('.chat-message.assistant .message-content')).toContainText('A safe plan');
+    await expect(page.getByTestId('stop-chat')).toHaveCount(0);
+    expect(JSON.stringify(provider.received)).toContain('Selected plan: create fresh accounts');
+    expect(JSON.stringify(provider.received)).not.toContain(key);
+    expect(readFileSync(join(workspace, 'provider-keys.enc.json'), 'utf8')).not.toContain(key);
+    expect(readFileSync(join(workspace, 'workspace/state.sqlite')).includes(Buffer.from(key))).toBe(false);
+    expect(await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }))).not.toContain(key);
+    await page.screenshot({ path: resolve('docs/screenshots/desktop-chat.png') });
+    await app.close(); app = await launch(); page = await app.firstWindow();
+    await page.locator('.assistant-toggle').click();
+    await expect(page.getByTestId('model-picker')).toContainText('Local test model');
+    await page.locator('.chat-session-link').first().click();
+    await expect(page.locator('.chat-message')).toHaveCount(2);
+    await page.getByLabel('Message AI Assistant', { exact: true }).fill('Continue with a short summary.');
+    await page.getByTestId('send-chat').click();
+    await expect(page.locator('.chat-message.assistant')).toHaveCount(2);
+    await expect(page.getByTestId('stop-chat')).toHaveCount(0);
+    expect(provider.received).toHaveLength(2); // Restored key works, no background inference calls.
+    await page.getByRole('button', { name: 'Workbench', exact: true }).click();
+    await page.getByTestId('load-demo').click();
+    await expect(page.locator('.connection-pill.connected')).toHaveCount(2);
+    await page.getByLabel('I approve this case version and the target origins above for this run.', { exact: true }).check();
+    await page.getByTestId('run').click(); await page.getByTestId('confirm-run').click();
+    await expect(page.locator('.verdict-banner h2')).toHaveText('Reproduced');
+    const browser = await page.evaluate(async () => {
+      const headers = { authorization: `Bearer ${sessionStorage.getItem('reprocase.token')}`, 'content-type': 'application/json' };
+      const state = await (await fetch('/api/state', { headers })).json(); const id = state.cases[0].id;
+      const response = await fetch(`/api/cases/${id}/actors/owner/browser`, { method: 'POST', headers, body: JSON.stringify({ origin: state.demo.origin }) });
+      const status = await response.json();
+      const snapshot = await (await fetch(`/api/cases/${id}/actors/owner/snapshot`, { headers })).json();
+      return { status, fieldCount: snapshot.fields?.length ?? 0 };
+    });
+    expect(browser.status.mode).toBe('browser'); expect(browser.fieldCount).toBeGreaterThan(1);
+    if (process.env.REPROCASE_DESKTOP_EXE) expect(await app.evaluate(() => process.env.REPROCASE_CHROMIUM_EXECUTABLE)).toMatch(/resources[\\/]chromium-\d+[\\/]/);
+  } finally { await app?.close(); await provider.close(); }
+});

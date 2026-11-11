@@ -1,0 +1,337 @@
+{
+  "format": "reprocase",
+  "schemaVersion": 1,
+  "exportedAt": "2026-11-10T16:20:29.452Z",
+  "case": {
+    "schemaVersion": 1,
+    "id": "cross-tenant-document-write",
+    "revision": 1,
+    "title": "Cross-tenant private document modification",
+    "description": "Create a private document, observe its original title as owner, mutate it using another tenant, then independently read its title again as owner.",
+    "policy": {
+      "statement": "Only the owner can modify a private document. A member of another tenant must receive 403 or 404, and the original title must remain unchanged.",
+      "acknowledged": true
+    },
+    "actors": [
+      {
+        "id": "owner",
+        "label": "Resource owner",
+        "color": "#43d9bc",
+        "expectedRole": "member",
+        "identity": {
+          "origin": "api",
+          "path": "/me",
+          "idPointer": "/id",
+          "tenantPointer": "/tenant",
+          "rolePointer": "/role"
+        }
+      },
+      {
+        "id": "researcher",
+        "label": "Researcher",
+        "color": "#a99bff",
+        "expectedRole": "member",
+        "identity": {
+          "origin": "api",
+          "path": "/me",
+          "idPointer": "/id",
+          "tenantPointer": "/tenant",
+          "rolePointer": "/role"
+        }
+      }
+    ],
+    "origins": [
+      {
+        "id": "api",
+        "label": "Application API"
+      }
+    ],
+    "preconditions": [
+      {
+        "id": "distinct-accounts",
+        "label": "The two accounts are different",
+        "op": "neq",
+        "left": {
+          "$ref": "actors.owner.id"
+        },
+        "right": {
+          "$ref": "actors.researcher.id"
+        }
+      },
+      {
+        "id": "distinct-tenants",
+        "label": "The accounts belong to different tenants",
+        "op": "neq",
+        "left": {
+          "$ref": "actors.owner.tenant"
+        },
+        "right": {
+          "$ref": "actors.researcher.tenant"
+        }
+      }
+    ],
+    "resources": [
+      {
+        "id": "document",
+        "label": "Private document",
+        "ownerActor": "owner",
+        "createdBy": "create-document",
+        "idRef": "captures.documentId",
+        "ownerRef": "captures.documentOwner",
+        "tenantRef": "captures.documentTenant"
+      }
+    ],
+    "steps": [
+      {
+        "id": "csrf",
+        "label": "Get the owner’s current CSRF token",
+        "phase": "prepare",
+        "effect": "read",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "GET",
+          "path": "/csrf",
+          "pathParams": {},
+          "query": {},
+          "headers": {}
+        },
+        "captures": [
+          {
+            "name": "ownerCsrf",
+            "from": "body",
+            "pointer": "/csrf"
+          }
+        ],
+        "checks": []
+      },
+      {
+        "id": "create-document",
+        "label": "Create a fresh private document",
+        "phase": "prepare",
+        "effect": "write",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "POST",
+          "path": "/documents",
+          "pathParams": {},
+          "query": {},
+          "headers": {
+            "x-csrf-token": {
+              "$ref": "captures.ownerCsrf"
+            }
+          },
+          "body": {
+            "title": "ReproCase controlled test document",
+            "marker": {
+              "$ref": "run.marker"
+            }
+          }
+        },
+        "captures": [
+          {
+            "name": "documentId",
+            "from": "body",
+            "pointer": "/id"
+          },
+          {
+            "name": "documentOwner",
+            "from": "body",
+            "pointer": "/ownerId"
+          },
+          {
+            "name": "documentTenant",
+            "from": "body",
+            "pointer": "/tenant"
+          }
+        ],
+        "checks": [
+          {
+            "id": "private-document",
+            "label": "The new document is private",
+            "op": "eq",
+            "left": {
+              "$ref": "steps.create-document.body.visibility"
+            },
+            "right": "private"
+          }
+        ]
+      },
+      {
+        "id": "owner-read",
+        "label": "Confirm the owner can read the marker",
+        "phase": "prepare",
+        "effect": "read",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "GET",
+          "path": "/documents/{document}",
+          "pathParams": {
+            "document": {
+              "$ref": "captures.documentId"
+            }
+          },
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": [
+          {
+            "id": "owner-marker",
+            "label": "Owner reads this run’s marker",
+            "op": "eq",
+            "left": {
+              "$ref": "steps.owner-read.body.marker"
+            },
+            "right": {
+              "$ref": "run.marker"
+            }
+          }
+        ]
+      },
+      {
+        "id": "researcher-csrf",
+        "label": "Get the researcher’s current CSRF token",
+        "phase": "prepare",
+        "effect": "read",
+        "request": {
+          "actor": "researcher",
+          "origin": "api",
+          "method": "GET",
+          "path": "/csrf",
+          "pathParams": {},
+          "query": {},
+          "headers": {}
+        },
+        "captures": [
+          {
+            "name": "researcherCsrf",
+            "from": "body",
+            "pointer": "/csrf"
+          }
+        ],
+        "checks": []
+      },
+      {
+        "id": "cross-tenant-write",
+        "label": "Attempt to change the title as the other tenant",
+        "phase": "probe",
+        "effect": "write",
+        "request": {
+          "actor": "researcher",
+          "origin": "api",
+          "method": "PATCH",
+          "path": "/documents/{document}",
+          "pathParams": {
+            "document": {
+              "$ref": "captures.documentId"
+            }
+          },
+          "query": {},
+          "headers": {
+            "x-csrf-token": {
+              "$ref": "captures.researcherCsrf"
+            }
+          },
+          "body": {
+            "title": {
+              "$ref": "run.marker"
+            }
+          }
+        },
+        "captures": [],
+        "checks": []
+      },
+      {
+        "id": "owner-read-after",
+        "label": "Independently observe the title as the owner",
+        "phase": "verify",
+        "effect": "read",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "GET",
+          "path": "/documents/{document}",
+          "pathParams": {
+            "document": {
+              "$ref": "captures.documentId"
+            }
+          },
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": []
+      },
+      {
+        "id": "remove-document",
+        "label": "Remove the document created by this run",
+        "phase": "cleanup",
+        "effect": "write",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "DELETE",
+          "path": "/documents/{document}",
+          "pathParams": {
+            "document": {
+              "$ref": "captures.documentId"
+            }
+          },
+          "query": {},
+          "headers": {
+            "x-csrf-token": {
+              "$ref": "captures.ownerCsrf"
+            }
+          }
+        },
+        "captures": [],
+        "checks": []
+      }
+    ],
+    "witness": {
+      "success": [
+        {
+          "id": "write-observed",
+          "label": "Owner observes the other actor’s new marker in the title",
+          "op": "eq",
+          "left": {
+            "$ref": "steps.owner-read-after.body.title"
+          },
+          "right": {
+            "$ref": "run.marker"
+          }
+        }
+      ],
+      "rejection": [
+        {
+          "id": "write-denied",
+          "label": "The API explicitly denies modification",
+          "op": "in",
+          "left": {
+            "$ref": "steps.cross-tenant-write.status"
+          },
+          "right": [
+            403,
+            404
+          ]
+        }
+      ],
+      "writeProof": {
+        "resource": "document",
+        "probe": "cross-tenant-write",
+        "before": "owner-read",
+        "after": "owner-read-after",
+        "fieldPointer": "/title",
+        "mutationPointer": "/title"
+      }
+    }
+  },
+  "redactions": [
+    "Account credentials are not included.",
+    "Observed actor, resource, and run-marker bindings are replaced by symbolic aliases where available.",
+    "Review the export for application-specific personal information before sharing."
+  ]
+}

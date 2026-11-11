@@ -1,0 +1,59 @@
+name: Verify source and Windows release
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  source:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browsers
+      REPROCASE_HEADLESS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install-deps chromium
+        if: runner.os == 'Linux'
+      - run: npm run browsers:install
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run desktop:build
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failure-${{ matrix.os }}
+          path: |
+            test-results
+            playwright-report
+  windows-release:
+    runs-on: windows-latest
+    needs: source
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browsers
+      REPROCASE_HEADLESS: '1'
+      REPROCASE_PACKAGE_OUT: ${{ github.workspace }}/release/windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run browsers:install
+      - run: npm run desktop:package
+      - name: Test the packaged executable
+        shell: pwsh
+        run: |
+          $env:REPROCASE_DESKTOP_EXE = Join-Path $env:REPROCASE_PACKAGE_OUT 'ReproCase-win32-x64/ReproCase.exe'
+          npm run test:desktop -- desktop.spec.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-beta
+          path: release/windows/ReproCase-win32-x64
