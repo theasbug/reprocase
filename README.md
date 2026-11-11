@@ -13,6 +13,7 @@
 
 <p align="center">
   <a href="https://github.com/theasbug/reprocase/releases/tag/v1.1.0-beta.1"><strong>Download for Windows</strong></a> ·
+  <a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4">Watch the 56s demo</a> ·
   <a href="#try-it-in-two-minutes">Try the demo</a> ·
   <a href="docs/USER-GUIDE.en.md">User guide</a> ·
   <a href="docs/QUICKSTART.tr.md">Türkçe</a>
@@ -36,9 +37,9 @@ HTTP captures often depend on yesterday's cookies, object IDs and account setup.
 
 The AI helps investigate and draft cases. **Explicit checks in the shared core determine the case verdict.**
 
-<p align="center"><img src="docs/images/workbench.png" alt="Actual local demo: isolated actors, a fresh private document and an authorization reproduction workflow" width="1100"></p>
+<p align="center"><a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4"><img src="docs/images/demo-preview.png" alt="Watch the real 56-second demo: reproduce, refresh accounts and reproduce again, then observe the secure target" width="1100"></a></p>
 
-*Actual application screenshot using the bundled local demo and disposable test accounts.*
+*[Watch the 56-second demo](https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4): Reproduced → fresh accounts → Reproduced → secure target → Not reproduced. Actual local application; no API key required.*
 
 ## Try it in two minutes
 
@@ -138,7 +139,7 @@ GitHub Actions checks source on Linux and Windows, then packages and smoke-tests
 - [English guide](docs/USER-GUIDE.en.md) · [Türkçe kılavuz](docs/USER-GUIDE.tr.md) · [Türkçe hızlı başlangıç](docs/QUICKSTART.tr.md)
 - [Case format](docs/CASE-FORMAT.md) · [CLI](docs/CLI.md) · [Proof exports](docs/EXPORTS.md)
 - [Desktop](docs/DESKTOP.md) · [AI providers](docs/AI-PROVIDERS.md) · [Changelog](CHANGELOG.md)
-- [Contribute](CONTRIBUTING.md) · [Report a bug](https://github.com/theasbug/reprocase/issues/new/choose) · [Security reporting](SECURITY.md) · [Release checks](docs/RELEASE-CHECKS.md)
+- [Contribute](CONTRIBUTING.md) · [Report a bug](https://github.com/theasbug/reprocase/issues/new/choose) · [Five-minute beta test](docs/launch/FEEDBACK.md) · [Security reporting](SECURITY.md) · [Release checks](docs/RELEASE-CHECKS.md)
 
 Useful contributions include minimal local reproductions, provider compatibility reports without keys, case templates, accessibility improvements and translations. If ReproCase helps your research, a star helps others discover it.
 

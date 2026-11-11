@@ -1,0 +1,50 @@
+name: Beta demo feedback
+description: Tell us what happened when you tried the local fresh-account demo
+title: '[Beta feedback] '
+labels: ['beta-feedback']
+body:
+  - type: markdown
+    attributes:
+      value: 'Use only the local demo. Keep keys, cookies, private captures and ReproCase-data out of this issue. Security vulnerabilities belong in private reporting.'
+  - type: input
+    id: version
+    attributes:
+      label: ReproCase version
+      placeholder: 1.1.0-beta.1
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system and installation method
+      placeholder: Windows 11 x64, portable ZIP
+    validations:
+      required: true
+  - type: dropdown
+    id: first_run
+    attributes:
+      label: First vulnerable-demo run
+      options: ['Reproduced', 'Not reproduced', 'Inconclusive', 'Could not start']
+    validations:
+      required: true
+  - type: dropdown
+    id: fresh_run
+    attributes:
+      label: Run after choosing Fresh identities
+      options: ['Reproduced', 'Not reproduced', 'Inconclusive', 'Could not start', 'Not tried']
+    validations:
+      required: true
+  - type: dropdown
+    id: secure_run
+    attributes:
+      label: Run after switching to Secure target
+      options: ['Not reproduced', 'Reproduced', 'Inconclusive', 'Could not start', 'Not tried']
+    validations:
+      required: true
+  - type: textarea
+    id: friction
+    attributes:
+      label: What was confusing or broken?
+      description: Include sanitized local-demo errors and the steps you took. A successful run is useful feedback too.
+    validations:
+      required: true

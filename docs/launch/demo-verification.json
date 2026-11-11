@@ -1,0 +1,33 @@
+{
+  "product": "ReproCase",
+  "version": "1.1.0-beta.1",
+  "recordedAt": "2026-11-11T18:13:20.674Z",
+  "source": "real local HTTP fixture and workbench",
+  "sourceCommit": "c7a8e79b741ce136e55ff028cdd496d53c05b058",
+  "sameCaseRevision": true,
+  "freshIdentitiesChanged": true,
+  "providerConfigured": false,
+  "outcomes": [
+    {
+      "verdict": "reproduced",
+      "code": "witness_observed",
+      "caseRevision": 1,
+      "requests": 9
+    },
+    {
+      "verdict": "reproduced",
+      "code": "witness_observed",
+      "caseRevision": 1,
+      "requests": 9
+    },
+    {
+      "verdict": "not_reproduced",
+      "code": "rejection_observed",
+      "caseRevision": 1,
+      "requests": 9
+    }
+  ],
+  "sanitizedExportVerified": true,
+  "pageErrors": [],
+  "editedVerdicts": false
+}
