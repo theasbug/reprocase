@@ -131,12 +131,14 @@ export class Harness implements AgentRuntime {
     throw new Error('Unknown tool');
   }
   private async command(command:string,timeout:number,signal:AbortSignal){
-    const env=Object.fromEntries(['PATH','Path','SystemRoot','COMSPEC','PATHEXT','TEMP','TMP','USERPROFILE','LOCALAPPDATA','APPDATA'].filter(k=>process.env[k]).map(k=>[k,process.env[k]!]));
+    // PowerShell/.NET also need the standard Windows folder/module variables on clean hosts.
+    // Keep an allowlist: provider keys and unrelated application secrets must not be inherited.
+    const env=Object.fromEntries(['PATH','Path','SystemRoot','WINDIR','SystemDrive','COMSPEC','PATHEXT','TEMP','TMP','USERPROFILE','LOCALAPPDATA','APPDATA','ProgramData','ALLUSERSPROFILE','ProgramFiles','ProgramFiles(x86)','ProgramW6432','PSModulePath','HOMEDRIVE','HOMEPATH','OS','PROCESSOR_ARCHITECTURE','NUMBER_OF_PROCESSORS'].filter(k=>process.env[k]).map(k=>[k,process.env[k]!]));
     const binary=platform()==='win32'?join(process.env.SystemRoot??'C:\\Windows','System32','WindowsPowerShell','v1.0','powershell.exe'):'/bin/sh';
     const args=platform()==='win32'?['-NoLogo','-NoProfile','-NonInteractive','-Command','-']:['-s'];
     return await new Promise<unknown>((resolve,reject)=>{let output='',settled=false,timedOut=false;const child=spawn(binary,args,{cwd:this.root,env,windowsHide:true,stdio:['pipe','pipe','pipe']});const collect=(data:Buffer)=>{output=(output+data.toString('utf8')).slice(-30000);};child.stdout.on('data',collect);child.stderr.on('data',collect);
       const stop=()=>{if(child.pid&&platform()==='win32'){const kill=spawn('taskkill.exe',['/pid',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});kill.on('error',()=>child.kill());}else child.kill('SIGTERM');};
-      const timer=setTimeout(()=>{timedOut=true;stop();},timeout*1000);signal.addEventListener('abort',stop,{once:true});child.once('error',error=>{clearTimeout(timer);signal.removeEventListener('abort',stop);reject(error);});child.once('close',code=>{clearTimeout(timer);signal.removeEventListener('abort',stop);if(settled)return;settled=true;resolve({exitCode:code,output,timedOut,cancelled:signal.aborted,workingDirectory:this.root});});child.stdin.end((platform()==='win32'?"[Console]::OutputEncoding=New-Object Text.UTF8Encoding($false)\n":'')+command+'\n');
+      const timer=setTimeout(()=>{timedOut=true;stop();},timeout*1000);signal.addEventListener('abort',stop,{once:true});child.once('error',error=>{clearTimeout(timer);signal.removeEventListener('abort',stop);reject(error);});child.once('close',code=>{clearTimeout(timer);signal.removeEventListener('abort',stop);if(settled)return;settled=true;resolve({exitCode:code,output,timedOut,cancelled:signal.aborted,workingDirectory:this.root});});const script=(platform()==='win32'?"[Console]::OutputEncoding=New-Object Text.UTF8Encoding($false)\n":'')+command+'\n\n';child.stdin.end(platform()==='win32'?script.replace(/\r?\n/g,'\r\n'):script);
     });
   }
   close(){this.permissions.close();}
