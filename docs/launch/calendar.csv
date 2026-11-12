@@ -1,6 +1,6 @@
 date,time,timezone,channel,post_id,status,prerequisite,url
 "2026-11-11","20:30","Europe/Istanbul","X","launch","published","verified demo attached","https://x.com/theasbug/status/2120583234086228135"
-"2026-11-13","20:30","Europe/Istanbul","X","http-200","draft","review facts and current platform rules",""
+"2026-11-12","17:58","Europe/Istanbul","X","http-200","published","verified walkthrough","https://x.com/theasbug/status/2120894107145159159"
 "2026-11-15","20:30","Europe/Istanbul","X","beta-feedback","draft","review facts and current platform rules",""
 "2026-11-18","20:30","Europe/Istanbul","X","resource","draft","review facts and current platform rules",""
 "2026-11-20","20:30","Europe/Istanbul","X","windows-fix","draft","review facts and current platform rules",""

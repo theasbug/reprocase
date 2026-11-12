@@ -7,6 +7,7 @@ The first public demo uses the real local application, two disposable accounts a
 - [Watch the 56-second demo](https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4)
 - [English captions](https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo.en.srt)
 - [Published launch post](https://x.com/theasbug/status/2120583234086228135) — pinned to the maintainer's profile.
+- [Published technical post: HTTP 200 is not proof](https://x.com/theasbug/status/2120894107145159159)
 - [Why HTTP 200 is not an authorization proof](why-200-is-not-proof.md)
 - [English posts](posts.en.md) · [Turkish posts](posts.tr.md)
 - [Community routing and human-written submissions](COMMUNITY.md)

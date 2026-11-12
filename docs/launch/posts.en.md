@@ -1,6 +1,6 @@
 # ReproCase — English X posts
 
-All entries after launch are drafts. Dates use Europe/Istanbul. Do not present a draft as already published.
+Entries marked draft are not published. Dates use Europe/Istanbul.
 
 ## 2026-11-11 — launch (published)
 
@@ -14,7 +14,9 @@ https://github.com/theasbug/reprocase
 
 Looking for 5 beta testers. #bugbounty
 
-## 2026-11-13 — http-200 (draft)
+## 2026-11-12 — http-200 (published)
+
+Published: https://x.com/theasbug/status/2120894107145159159
 
 HTTP 200 alone does not prove an IDOR.
 
