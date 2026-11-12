@@ -37,9 +37,9 @@ HTTP captures often depend on yesterday's cookies, object IDs and account setup.
 
 The AI helps investigate and draft cases. **Explicit checks in the shared core determine the case verdict.**
 
-<p align="center"><a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4"><img src="docs/images/demo-preview.png" alt="Watch the real 56-second demo: reproduce, refresh accounts and reproduce again, then observe the secure target" width="1100"></a></p>
+<p align="center"><a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4"><img src="docs/images/demo-highlights.gif" alt="Recorded local demo highlights: reproduced, reproduced with fresh accounts, then not reproduced on the secure target. Click for the full recording." width="1100"></a></p>
 
-*[Watch the 56-second demo](https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4): Reproduced → fresh accounts → Reproduced → secure target → Not reproduced. Actual local application; no API key required.*
+*9-second edited highlights from the actual local application. [Watch the full 56-second demo](https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4): Reproduced → fresh accounts → Reproduced → secure target → Not reproduced. No API key required. [Still screenshot](docs/images/demo-preview.png).*
 
 ## Try it in two minutes
 
