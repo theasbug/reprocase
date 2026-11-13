@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- README focused on the core promise: reproducible IDOR/BOLA proofs. Added a 30-second case walkthrough, an audience section, download verification and a note on how the project is built. AI and recon extras moved into a collapsible section.
+- Added `templates/` with schema-valid horizontal IDOR (read/write) and vertical privilege (BFLA) cases.
+- Added a tag-triggered release workflow that builds, smoke-tests and checksums the Windows archive, records a GitHub build-provenance attestation and creates a draft release.
+- Added Dependabot configuration and resolved moderate `minimatch`/`glob` advisories in Electron packaging dependencies (`npm audit`: 0).
+- Moved the "HTTP 200 is not proof" article to `docs/articles/` and the beta checklist to `docs/BETA-TEST.md`. Removed maintainer campaign files from the repository.
+
 ## 1.1.0-beta.1
 
 - Fixed URL scope boundaries and unknown-program fail-open behavior; exclusions retain their path boundaries.

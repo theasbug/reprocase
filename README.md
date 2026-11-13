@@ -1,62 +1,61 @@
 <p align="center"><img src="docs/images/banner.svg" alt="ReproCase — Fresh accounts. Reproducible proofs." width="100%"></p>
 
-# ReproCase
+<h1 align="center">ReproCase</h1>
 
-<p align="center"><strong>An open-source AI workbench for bug bounty research and reproducible authorization testing.</strong></p>
+<p align="center"><strong>HTTP 200 is not proof of an IDOR. ReproCase checks whether the boundary was actually crossed.</strong></p>
 
 <p align="center">
   <a href="https://github.com/theasbug/reprocase/actions/workflows/ci.yml"><img alt="Build and tests" src="https://github.com/theasbug/reprocase/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/theasbug/reprocase/releases/tag/v1.1.0-beta.1"><img alt="Version 1.1.0 beta 1" src="https://img.shields.io/badge/release-1.1.0--beta.1-a59aff"></a>
   <a href="LICENSE"><img alt="Apache 2.0 license" src="https://img.shields.io/badge/license-Apache--2.0-6bd5ad"></a>
-  <img alt="Windows x64 portable application" src="https://img.shields.io/badge/desktop-Windows%20x64-72b7ff">
+  <img alt="No API key needed for the demo" src="https://img.shields.io/badge/demo-no%20API%20key-72b7ff">
 </p>
 
 <p align="center">
   <a href="https://github.com/theasbug/reprocase/releases/tag/v1.1.0-beta.1"><strong>Download for Windows</strong></a> ·
-  <a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4">Watch the 56s demo</a> ·
-  <a href="#try-it-in-two-minutes">Try the demo</a> ·
-  <a href="docs/USER-GUIDE.en.md">User guide</a> ·
+  <a href="#run-from-source-linux-macos-windows">Run from source</a> ·
+  <a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4">56s demo</a> ·
+  <a href="templates/">Case templates</a> ·
   <a href="docs/QUICKSTART.tr.md">Türkçe</a>
 </p>
 
-A finding should survive a change of accounts. ReproCase turns an authorization test into a case that another researcher can run with **their own sessions and newly created resources**. It checks who the accounts are, who owns the resource, and whether the declared security boundary was actually crossed.
+<p align="center"><a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4"><img src="docs/images/demo-highlights.gif" alt="Recorded local demo: reproduced, reproduced again with fresh accounts, then not reproduced on the secure target." width="1000"></a></p>
 
-Alongside the proof engine, an AI assistant can work with local files, run terminal commands, control Windows applications and connect to MCP tools. Bring your own model provider; **the local demo and deterministic case runner need no AI subscription or API key**.
+<p align="center"><sub>Recorded from the real local app, no API key. <b>Reproduced</b> → fresh accounts → <b>Reproduced</b> → secure target → <b>Not reproduced</b>. <a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4">Full 56s recording</a>.</sub></p>
 
-> **Public beta:** Windows x64 is the packaged desktop platform. The current focus is HTTP/JSON authorization cases such as IDOR/BOLA and cross-tenant access. See [tested behavior and limitations](docs/VERIFICATION.md).
+## The problem
 
-## Why ReproCase?
+You found an IDOR. Then the triager replies **"could not reproduce"**: your cookies expired, the object ID belonged to yesterday's account, or the two "different" accounts turned out to be in the same tenant.
 
-HTTP captures often depend on yesterday's cookies, object IDs and account setup. A successful HTTP response alone does not establish an authorization failure.
+ReproCase turns the finding into a **case**: a small JSON file that anyone can run with **their own accounts and newly created resources**. On every run it checks three things:
 
-- **Verify the actors:** live identity, role and tenant checks distinguish a wrong account from a failed reproduction.
-- **Create fresh evidence:** prepare a controlled resource, capture new IDs and CSRF values, then bind them to specific request locations.
-- **Check a real witness:** for example, another account reads the unique marker just created by the owner.
-- **Separate three outcomes:** **Reproduced**, **Not reproduced**, or **Inconclusive** when setup, sessions or evidence prevent a decision.
-- **Share the scenario:** review a sanitized `.reprocase.json` package; recipients supply their own local account bindings.
+| | Check | Why it matters |
+|---|---|---|
+| 1 | **Who are the actors?** Live identity, role and tenant probes | A wrong account is not a failed reproduction |
+| 2 | **Who owns the object?** It is created fresh in this run, and ownership is observed | No reliance on stale IDs |
+| 3 | **Was the boundary crossed?** The other account must read *this run's* unique marker | A 200 with an empty body proves nothing |
 
-The AI helps investigate and draft cases. **Explicit checks in the shared core determine the case verdict.**
+Every run ends in exactly one verdict: **`reproduced`**, **`not_reproduced`**, or **`inconclusive`**. An expired session or a failed setup is reported as inconclusive, so it can never pass as a fix.
 
-<p align="center"><a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4"><img src="docs/images/demo-highlights.gif" alt="Recorded local demo highlights: reproduced, reproduced with fresh accounts, then not reproduced on the secure target. Click for the full recording." width="1100"></a></p>
+## Who it is for
 
-*9-second edited highlights from the actual local application. [Watch the full 56-second demo](https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4): Reproduced → fresh accounts → Reproduced → secure target → Not reproduced. No API key required. [Still screenshot](docs/images/demo-preview.png).*
+- **Bug bounty hunters.** Attach a case that proves itself and avoid "N/A, cannot reproduce".
+- **Triagers and program owners.** Rerun a report with your own test accounts in seconds.
+- **AppSec teams.** Keep the case as a regression check and rerun it after the fix.
 
 ## Try it in two minutes
 
 ### Windows portable
 
-1. Download **[ReproCase-1.1.0-beta.1-Windows-x64.zip](https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-1.1.0-beta.1-Windows-x64.zip)** from Releases.
-2. Extract the **entire ZIP** into a writable folder. Keep its folders together, then open `ReproCase.exe`.
-3. Load the built-in local demo. Review the accounts and expected access policy, approve the case and target, inspect the preflight, then run it.
-4. Choose **Fresh identities** and repeat. Switch to **Secure target** and rerun the same case to compare the result.
+1. Download **[ReproCase-1.1.0-beta.1-Windows-x64.zip](https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-1.1.0-beta.1-Windows-x64.zip)** and extract the **whole** archive into a writable folder.
+2. Open `ReproCase.exe` and load the built-in local demo. Review the accounts and the access policy, approve, then run. The expected result is **Reproduced**.
+3. Choose **Fresh identities** and run again (still **Reproduced**). Switch to **Secure target** and run again (**Not reproduced**).
 
-The portable app includes Electron and Chromium. You do not need Node.js, Python or Docker. The executable is currently **unsigned**; verify the archive against the release's SHA-256 file. Only download assets from this repository's Releases.
+The app bundles Electron and Chromium, so you do not need Node.js, Python or Docker. The executable is **not code-signed yet**. Check the archive before you run it ([how to verify](#verify-a-download)).
 
-App data is stored in `ReproCase-data` beside the executable. Keep it private and back it up before upgrading. Extract updates into a separate folder; [desktop notes](docs/DESKTOP.md) explain data and credential portability.
+### Run from source (Linux, macOS, Windows)
 
-### Run from source
-
-Requires **Node.js 24.18+** and npm.
+Requires **Node.js 24.18+**.
 
 ~~~sh
 git clone https://github.com/theasbug/reprocase.git
@@ -66,41 +65,45 @@ npm run browsers:install
 npm run demo
 ~~~
 
-Open the local URL printed by the command. On Linux, first install Chromium's system dependencies with `npx playwright install-deps chromium`. Web/source use on Linux and macOS is experimental; native computer control is implemented for Windows.
+Open the local URL printed by the command. On Linux, first run `npx playwright install-deps chromium`. The web workbench and the case runner work on every platform. Native desktop control is Windows-only.
 
-For a Windows desktop source build, also run:
+## A case in 30 seconds
 
-~~~sh
-npm run desktop:setup
-npm run desktop:build
-npm run desktop
+~~~jsonc
+{
+  "policy":        { "statement": "A private document is readable only by its owner." },
+  "preconditions": [ { "op": "neq", "left": {"$ref": "actors.owner.tenant"}, "right": {"$ref": "actors.researcher.tenant"} } ],
+  "steps": [
+    { "id": "create-document", "actor": "owner",      "method": "POST", "path": "/documents", "body": { "marker": {"$ref": "run.marker"} } },
+    { "id": "probe",           "actor": "researcher", "method": "GET",  "path": "/documents/{document}" }
+  ],
+  "witness": {
+    "success":   [ { "op": "eq", "left": {"$ref": "steps.probe.body.marker"}, "right": {"$ref": "run.marker"} } ],
+    "rejection": [ { "op": "in", "left": {"$ref": "steps.probe.status"},      "right": [403, 404] } ]
+  }
+}
 ~~~
 
-## Inside the workbench
+<sub>Simplified. See the full executable [example](examples/cross-tenant.reprocase.json) and the [case format](docs/CASE-FORMAT.md).</sub>
 
-### Cases and evidence
+Start from a template in [`templates/`](templates/): horizontal IDOR (read and write) and vertical privilege escalation. Cross-tenant read and write cases are in [`examples/`](examples/). Import a HAR, raw HTTP, Burp XML or Postman capture to draft a case from your own traffic.
 
-- HAR, raw HTTP, Burp XML and Postman imports become reviewable case drafts.
-- Isolated Chromium account contexts, cookie or Bearer bindings, live preflight checks and explicit ownership.
-- Guided editing, JSON Pointer captures, read and controlled-write cases, actor matrices and run comparisons.
-- Reviewed case packages, HTML/Markdown reports and Playwright proof exports that reuse the runner inside a ReproCase checkout.
-- CLI and stdio MCP entry points use the same application services as the interface.
+## What is inside
 
-### An AI assistant with local tools
+- **Proof engine.** Isolated Chromium account contexts, cookie or Bearer bindings, live preflight, JSON Pointer captures, read and controlled-write cases, actor matrices and run comparisons.
+- **Sharing.** Sanitized `.reprocase.json` packages without credentials (recipients bind their own accounts), plus HTML/Markdown reports and Playwright proof exports.
+- **CLI and MCP.** `import`, `validate`, `run`, `compare` and `export` commands and a stdio MCP server that use the same services as the UI. See the [CLI docs](docs/CLI.md).
 
-- Chat sessions, searchable model selection by the composer and reasoning effort where supported.
-- Provider presets for OpenAI, Anthropic, Gemini, DeepSeek, OpenCode Go/Zen, OpenRouter, Groq and Mistral; advanced configuration for compatible or local endpoints.
-- Model discovery, streamed messages, provider-returned reasoning fields, tool activity, usage and token speed when available.
-- File search/read/edit with backups, terminal execution, and native Windows screenshots, windows, mouse, keyboard, clipboard and accessibility tools.
-- Follow-up messages during work, permission cards, and stdio/HTTP MCP management via `/mcp`.
+<details>
+<summary><strong>Optional extras: AI assistant and bug bounty utilities</strong></summary>
 
-Connect with **Provider + API key**, then choose a model inside **AI Assistant**. Catalog access, quotas, capabilities and reasoning visibility depend on the provider. [Provider details](docs/AI-PROVIDERS.md).
+<br>
 
-### Bug bounty utilities
+**AI assistant (bring your own model, off by default).** Use it to investigate and draft cases. The verdict always comes from the deterministic checks above, never from the model. It supports OpenAI, Anthropic, Gemini, DeepSeek, OpenRouter, Groq, Mistral and compatible local endpoints, along with local file tools, terminal access, Windows desktop control and MCP servers. Tool actions ask for approval by default. Auto-edit and autonomous modes are explicit opt-ins. [Provider details](docs/AI-PROVIDERS.md).
 
-Program scope and exclusions, managed-request rate limits and budgets, bounded CT/HTTP discovery, JWT/JS/traffic helpers, CVSS v3.1 and a finding tracker. English and Turkish interfaces include a searchable step-by-step guide.
+**Bug bounty utilities.** Program scope and exclusions, rate limits and request budgets, bounded CT/HTTP discovery, JWT/JS/traffic helpers, a CVSS v3.1 calculator and a finding tracker. Nuclei, subfinder, httpx, ffuf, nmap and sqlmap are detected when installed but not bundled.
 
-External tools such as Nuclei, subfinder, httpx, ffuf, nmap and sqlmap are **detected when installed**; they are not bundled. Recon observations are investigation candidates, not confirmed vulnerabilities.
+</details>
 
 <details>
 <summary><strong>See a vulnerable → secure run comparison</strong></summary>
@@ -109,40 +112,50 @@ External tools such as Nuclei, subfinder, httpx, ffuf, nmap and sqlmap are **det
 
 </details>
 
-## Execution and sharing
+## Security model
 
-The local service binds to loopback and uses an authenticated interface. Imports do not start target requests. Case packages contain declarative steps, not arbitrary JavaScript or shell programs.
+- The local service binds to loopback only and requires authentication. Importing a capture never sends a request.
+- Cases are declarative JSON. They contain no JavaScript or shell. Unknown fields are rejected.
+- Credentials are kept out of cases and redacted from shared evidence. Saved desktop credentials use Windows OS encryption.
+- Scope, exclusions, budgets and rate limits apply to every request that ReproCase itself sends. The optional AI terminal and desktop tools and external MCP servers are **not** sandboxed by that policy. **Ctrl+Alt+Esc** stops active agent work.
 
-Scope, exclusions, budgets, cancellation and a shared program rate limiter apply to **ReproCase-managed scans and case requests**. Terminal commands, desktop interactions and external MCP servers are not sandboxed by that network policy. Autonomous mode is an explicit, persistent permission choice, not OS isolation. **Ctrl+Alt+Esc** cancels active agent work and managed scans; it cannot undo actions already dispatched.
+Never publish your `ReproCase-data` folder, sessions or private captures. See [SECURITY.md](SECURITY.md) and [tested behavior and limitations](docs/VERIFICATION.md).
 
-Known credentials are redacted from shared evidence; review exports because unrelated confidential content can remain. Program HTTP header values stay in memory. Saved desktop provider/MCP credentials use Windows OS encryption. Never publish `ReproCase-data`, local sessions, bindings or private captures.
+### Verify a download
 
-The `.reprocase.json` runner is the primary proof format. Playwright exports require a ReproCase checkout, approved revision and local actor credentials. Hurl exports are **request drafts without verdict assertions**. See [exports](docs/EXPORTS.md) and [security](SECURITY.md).
+Each release ships a `SHA256SUMS.txt` file:
+
+~~~powershell
+Get-FileHash .\ReproCase-*-Windows-x64.zip -Algorithm SHA256
+~~~
+
+Releases built by the [release workflow](.github/workflows/release.yml) also carry a signed GitHub build-provenance attestation. It proves that the archive was built from this repository's source by GitHub Actions:
+
+~~~sh
+gh attestation verify ReproCase-<version>-Windows-x64.zip --repo theasbug/reprocase
+~~~
 
 ## Development
 
-TypeScript · npm workspaces · Node.js · Fastify · React/Vite · Zod · SQLite · Playwright · Electron.
+TypeScript · npm workspaces · Fastify · React/Vite · Zod · SQLite · Playwright · Electron.
 
 ~~~sh
-npm run typecheck
-npm test
-npm run desktop:build
-npm run test:e2e
+npm run typecheck && npm test && npm run test:e2e
 ~~~
 
-On Windows, `npm run test:desktop` checks the desktop application after desktop setup/build. Native input tests can move the pointer and type; use a dedicated desktop session. Package with `npm run desktop:package`; select a fresh `REPROCASE_PACKAGE_OUT` if the default output exists.
+GitHub Actions tests the source on Linux and Windows, then packages and smoke-tests the Windows executable. Desktop details are in [docs/DESKTOP.md](docs/DESKTOP.md) and release checks in [docs/RELEASE-CHECKS.md](docs/RELEASE-CHECKS.md).
 
-GitHub Actions checks source on Linux and Windows, then packages and smoke-tests the Windows executable. [Verification notes](docs/VERIFICATION.md) distinguish local results, historical provider experiments and current release limitations.
+**About how it is built.** ReproCase is developed with heavy use of AI coding assistants. Verdicts come from deterministic, tested core checks, and [VERIFICATION.md](docs/VERIFICATION.md) separates what has been tested from what has not. Reviews and bug reports are especially welcome.
 
 ## Documentation and community
 
 - [English guide](docs/USER-GUIDE.en.md) · [Türkçe kılavuz](docs/USER-GUIDE.tr.md) · [Türkçe hızlı başlangıç](docs/QUICKSTART.tr.md)
-- [Case format](docs/CASE-FORMAT.md) · [CLI](docs/CLI.md) · [Proof exports](docs/EXPORTS.md)
-- [Desktop](docs/DESKTOP.md) · [AI providers](docs/AI-PROVIDERS.md) · [Changelog](CHANGELOG.md)
-- [Contribute](CONTRIBUTING.md) · [Report a bug](https://github.com/theasbug/reprocase/issues/new/choose) · [Five-minute beta test](docs/launch/FEEDBACK.md) · [Security reporting](SECURITY.md) · [Release checks](docs/RELEASE-CHECKS.md)
+- [Case format](docs/CASE-FORMAT.md) · [Templates](templates/) · [CLI](docs/CLI.md) · [Proof exports](docs/EXPORTS.md) · [Desktop](docs/DESKTOP.md) · [Changelog](CHANGELOG.md)
+- [Why HTTP 200 is not proof](docs/articles/why-200-is-not-proof.md) · [Five-minute beta test](docs/BETA-TEST.md)
+- [Contribute](CONTRIBUTING.md) · [Report a bug](https://github.com/theasbug/reprocase/issues/new/choose) · [Security reporting](SECURITY.md)
 
-Useful contributions include minimal local reproductions, provider compatibility reports without keys, case templates, accessibility improvements and translations. If ReproCase helps your research, a star helps others discover it.
+The most useful contributions right now are **new case templates for real-world IDOR patterns**, minimal local reproductions, provider compatibility reports (without keys) and translations. If ReproCase saves you a "could not reproduce", a ⭐ helps other researchers find it.
 
-## License and acknowledgments
+## License
 
-[Apache-2.0](LICENSE). Third-party components retain their licenses. Built on Playwright, Electron, the MCP TypeScript SDK and the wider open-source community. [Hurl](https://hurl.dev/) is an existing HTTP testing tool and a useful comparison for request replay; the focus here is preserving account/resource relationships and validating evidence when accounts change.
+[Apache-2.0](LICENSE). Built on Playwright, Electron and the MCP TypeScript SDK. [Hurl](https://hurl.dev/) is a great tool for request replay. ReproCase focuses on preserving account and resource relationships and validating evidence when the accounts change.

@@ -1,0 +1,67 @@
+name: Release
+# Builds the Windows portable archive from a tagged commit, records a signed
+# build-provenance attestation and creates a DRAFT GitHub release for review.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build (for example v1.1.0-beta.2)
+        required: true
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write      # create the draft release
+      id-token: write      # sign the provenance attestation
+      attestations: write  # store the attestation
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browsers
+      REPROCASE_HEADLESS: '1'
+      REPROCASE_PACKAGE_OUT: ${{ github.workspace }}/release/windows
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run browsers:install
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run desktop:package
+      - name: Smoke-test the packaged executable
+        shell: pwsh
+        run: |
+          $env:REPROCASE_DESKTOP_EXE = Join-Path $env:REPROCASE_PACKAGE_OUT 'ReproCase-win32-x64/ReproCase.exe'
+          npm run test:desktop -- desktop.spec.ts
+      - name: Create archive and checksums
+        id: dist
+        shell: pwsh
+        run: |
+          $version = $env:TAG.TrimStart('v')
+          New-Item -ItemType Directory -Force dist | Out-Null
+          $zip = "dist/ReproCase-$version-Windows-x64.zip"
+          Compress-Archive -Path "$env:REPROCASE_PACKAGE_OUT/ReproCase-win32-x64/*" -DestinationPath $zip
+          git archive --format=zip --prefix="reprocase-$version/" -o "dist/ReproCase-$version-source.zip" HEAD
+          $lines = Get-ChildItem dist -Filter *.zip | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" }
+          $lines | Set-Content -Encoding ascii "dist/ReproCase-$version-SHA256SUMS.txt"
+          "version=$version" >> $env:GITHUB_OUTPUT
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*.zip
+      - name: Create draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $extra = @()
+          if ($env:TAG -match '-') { $extra += '--prerelease' }
+          $files = (Get-ChildItem dist).FullName
+          gh release create $env:TAG @files --draft --verify-tag --title "ReproCase ${{ steps.dist.outputs.version }}" --generate-notes @extra

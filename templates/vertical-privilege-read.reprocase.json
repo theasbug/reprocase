@@ -1,0 +1,298 @@
+{
+  "format": "reprocase",
+  "schemaVersion": 1,
+  "exportedAt": "2026-11-13T12:00:00.000Z",
+  "case": {
+    "schemaVersion": 1,
+    "id": "vertical-privilege-read",
+    "revision": 1,
+    "title": "Vertical privilege: member reads an admin-only object",
+    "description": "Template. An admin creates a fresh admin-only object with this run's marker; a lower-privileged member of the same tenant tries to read it. Adjust the admin endpoint, role values and JSON Pointers to your target.",
+    "policy": {
+      "statement": "Admin-only objects are readable only by admins. A member must receive 403 or 404.",
+      "acknowledged": true
+    },
+    "actors": [
+      {
+        "id": "owner",
+        "label": "Admin (owner)",
+        "color": "#43d9bc",
+        "expectedRole": "admin",
+        "identity": {
+          "origin": "api",
+          "path": "/me",
+          "idPointer": "/id",
+          "tenantPointer": "/tenant",
+          "rolePointer": "/role"
+        }
+      },
+      {
+        "id": "researcher",
+        "label": "Member (lower privilege)",
+        "color": "#a99bff",
+        "expectedRole": "member",
+        "identity": {
+          "origin": "api",
+          "path": "/me",
+          "idPointer": "/id",
+          "tenantPointer": "/tenant",
+          "rolePointer": "/role"
+        }
+      }
+    ],
+    "origins": [
+      {
+        "id": "api",
+        "label": "Application API"
+      }
+    ],
+    "preconditions": [
+      {
+        "id": "distinct-accounts",
+        "label": "The two accounts are different",
+        "op": "neq",
+        "left": {
+          "$ref": "actors.owner.id"
+        },
+        "right": {
+          "$ref": "actors.researcher.id"
+        }
+      },
+      {
+        "id": "same-tenant",
+        "label": "Both accounts belong to the same tenant",
+        "op": "eq",
+        "left": {
+          "$ref": "actors.owner.tenant"
+        },
+        "right": {
+          "$ref": "actors.researcher.tenant"
+        }
+      },
+      {
+        "id": "different-roles",
+        "label": "The accounts have different roles",
+        "op": "neq",
+        "left": {
+          "$ref": "actors.owner.role"
+        },
+        "right": {
+          "$ref": "actors.researcher.role"
+        }
+      }
+    ],
+    "resources": [
+      {
+        "id": "document",
+        "label": "Admin-only object",
+        "ownerActor": "owner",
+        "createdBy": "create-document",
+        "idRef": "captures.documentId",
+        "ownerRef": "captures.documentOwner",
+        "tenantRef": "captures.documentTenant"
+      }
+    ],
+    "steps": [
+      {
+        "id": "csrf",
+        "label": "Get the owner’s current CSRF token",
+        "phase": "prepare",
+        "effect": "read",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "GET",
+          "path": "/csrf",
+          "pathParams": {},
+          "query": {},
+          "headers": {}
+        },
+        "captures": [
+          {
+            "name": "ownerCsrf",
+            "from": "body",
+            "pointer": "/csrf"
+          }
+        ],
+        "checks": []
+      },
+      {
+        "id": "create-document",
+        "label": "Create a fresh private document",
+        "phase": "prepare",
+        "effect": "write",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "POST",
+          "path": "/documents",
+          "pathParams": {},
+          "query": {},
+          "headers": {
+            "x-csrf-token": {
+              "$ref": "captures.ownerCsrf"
+            }
+          },
+          "body": {
+            "title": "ReproCase controlled test document",
+            "marker": {
+              "$ref": "run.marker"
+            }
+          }
+        },
+        "captures": [
+          {
+            "name": "documentId",
+            "from": "body",
+            "pointer": "/id"
+          },
+          {
+            "name": "documentOwner",
+            "from": "body",
+            "pointer": "/ownerId"
+          },
+          {
+            "name": "documentTenant",
+            "from": "body",
+            "pointer": "/tenant"
+          }
+        ],
+        "checks": [
+          {
+            "id": "private-document",
+            "label": "The new document is private",
+            "op": "eq",
+            "left": {
+              "$ref": "steps.create-document.body.visibility"
+            },
+            "right": "private"
+          }
+        ]
+      },
+      {
+        "id": "owner-read",
+        "label": "Confirm the owner can read the marker",
+        "phase": "prepare",
+        "effect": "read",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "GET",
+          "path": "/documents/{document}",
+          "pathParams": {
+            "document": {
+              "$ref": "captures.documentId"
+            }
+          },
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": [
+          {
+            "id": "owner-marker",
+            "label": "Owner reads this run’s marker",
+            "op": "eq",
+            "left": {
+              "$ref": "steps.owner-read.body.marker"
+            },
+            "right": {
+              "$ref": "run.marker"
+            }
+          }
+        ]
+      },
+      {
+        "id": "member-read",
+        "label": "Read the admin-only object as the member",
+        "phase": "probe",
+        "effect": "read",
+        "request": {
+          "actor": "researcher",
+          "origin": "api",
+          "method": "GET",
+          "path": "/documents/{document}",
+          "pathParams": {
+            "document": {
+              "$ref": "captures.documentId"
+            }
+          },
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": []
+      },
+      {
+        "id": "remove-document",
+        "label": "Remove the document created by this run",
+        "phase": "cleanup",
+        "effect": "write",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "DELETE",
+          "path": "/documents/{document}",
+          "pathParams": {
+            "document": {
+              "$ref": "captures.documentId"
+            }
+          },
+          "query": {},
+          "headers": {
+            "x-csrf-token": {
+              "$ref": "captures.ownerCsrf"
+            }
+          }
+        },
+        "captures": [],
+        "checks": []
+      }
+    ],
+    "witness": {
+      "success": [
+        {
+          "id": "fresh-marker-leaked",
+          "label": "Member reads this run's exact marker",
+          "op": "eq",
+          "left": {
+            "$ref": "steps.member-read.body.marker"
+          },
+          "right": {
+            "$ref": "run.marker"
+          }
+        },
+        {
+          "id": "owner-preserved",
+          "label": "Returned resource still belongs to the owner",
+          "op": "eq",
+          "left": {
+            "$ref": "steps.member-read.body.ownerId"
+          },
+          "right": {
+            "$ref": "actors.owner.id"
+          }
+        }
+      ],
+      "rejection": [
+        {
+          "id": "access-denied",
+          "label": "The API explicitly denies access",
+          "op": "in",
+          "left": {
+            "$ref": "steps.member-read.status"
+          },
+          "right": [
+            403,
+            404
+          ]
+        }
+      ]
+    }
+  },
+  "redactions": [
+    "Account credentials are not included.",
+    "Observed actor, resource, and run-marker bindings are replaced by symbolic aliases where available.",
+    "Review the export for application-specific personal information before sharing."
+  ]
+}
