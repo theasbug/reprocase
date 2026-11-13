@@ -53,7 +53,7 @@ jobs:
           $lines = Get-ChildItem dist -Filter *.zip | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" }
           $lines | Set-Content -Encoding ascii "dist/ReproCase-$version-SHA256SUMS.txt"
           "version=$version" >> $env:GITHUB_OUTPUT
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*.zip
       - name: Create draft release
@@ -96,7 +96,7 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/theasbug/reprocase
           subject-digest: ${{ steps.push.outputs.digest }}
@@ -123,7 +123,7 @@ jobs:
           gradle-version: '8.14'
       - run: gradle --no-daemon jar
         working-directory: integrations/burp
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: integrations/burp/build/libs/*.jar
       - name: Attach the jar to the draft release
