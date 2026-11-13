@@ -1,0 +1,13 @@
+# docker compose up  ->  open the "Open http://localhost:4317/#token=..." URL from the logs
+services:
+  reprocase:
+    build: .
+    image: ghcr.io/theasbug/reprocase:latest
+    # Built-in demo lab. For your own targets use: ["serve", "--workspace", "/data", "--port", "4317"]
+    command: ["demo", "--workspace", "/data", "--port", "4317"]
+    ports:
+      - "127.0.0.1:4317:4317"
+    volumes:
+      - reprocase-data:/data
+volumes:
+  reprocase-data:

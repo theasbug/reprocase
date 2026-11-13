@@ -27,3 +27,7 @@ release/
 *.pcapng
 .DS_Store
 Thumbs.db
+
+# Burp extension build output
+integrations/burp/build/
+integrations/burp/.gradle/

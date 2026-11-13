@@ -128,3 +128,8 @@ npm run --silent cli -- mcp --workspace .reprocase
 The bridge uses stdio for protocol messages and stderr for diagnostics. Its workspace must match the running service. It does not start a public MCP HTTP endpoint or overwrite your AI client's settings.
 
 The `case_build`, `run_plan` and `run_compare` MCP tools use the same service as their UI and CLI counterparts. Case creation never acknowledges the policy. Preflight cannot bypass the current revision requirement or the execution checks.
+
+## Environment
+
+- `REPROCASE_LISTEN_HOST`: `127.0.0.1` (default), `0.0.0.0` or `::`. Use a non-loopback value only inside a container whose port is published on loopback (`-p 127.0.0.1:4317:4317`). Requests must still carry a loopback `Host`, a loopback `Origin` when present, and the per-start token.
+- `REPROCASE_HEADLESS=1`: run the managed Chromium headless.
