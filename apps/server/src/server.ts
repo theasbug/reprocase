@@ -33,6 +33,11 @@ export async function createServer(options: { workspace?: string; port?: number;
   service.registerSecret(token);
   const app = Fastify({ logger: false, bodyLimit: 50 * 1024 * 1024 });
   let webOrigin = '';
+  let allowedOrigins = new Set<string>();
+  // Containers must listen on all interfaces so a published port can reach the service.
+  // Host-header, Origin and token checks still only accept loopback clients' requests.
+  const listenHost = process.env.REPROCASE_LISTEN_HOST ?? '127.0.0.1';
+  if (!['127.0.0.1', '0.0.0.0', '::'].includes(listenHost)) throw new Error('REPROCASE_LISTEN_HOST must be 127.0.0.1, 0.0.0.0 or ::');
   app.addHook('onRequest', async (request, reply) => {
     let pathname: string;
     try { pathname = decodeURIComponent(request.url.split('?')[0]); } catch { return reply.code(400).send({ error: 'Invalid request path encoding' }); }
@@ -40,7 +45,7 @@ export async function createServer(options: { workspace?: string; port?: number;
     const isApi = request.routeOptions.url?.startsWith('/api/') || /^\/api(?:\/|$)/.test(pathname);
     const host = request.headers.host ?? '';
     if (!/^(127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/.test(host)) return reply.code(403).send({ error: 'Host is not allowed' });
-    if (webOrigin && request.headers.origin && request.headers.origin !== webOrigin) return reply.code(403).send({ error: 'Origin is not allowed' });
+    if (webOrigin && request.headers.origin && !allowedOrigins.has(request.headers.origin)) return reply.code(403).send({ error: 'Origin is not allowed' });
     if (isApi) {
       const received = String(request.headers.authorization ?? '').replace(/^Bearer /, '');
       if (Buffer.byteLength(received) !== Buffer.byteLength(token) || !timingSafeEqual(Buffer.from(received), Buffer.from(token))) return reply.code(401).send({ error: 'Open the local launch URL to authenticate this browser' });
@@ -177,8 +182,11 @@ export async function createServer(options: { workspace?: string; port?: number;
       app.setNotFoundHandler((request, reply) => request.url.startsWith('/api/') ? reply.code(404).send({ error: 'Unknown API route' }) : reply.sendFile('index.html'));
     } else app.get('/', (_request, reply) => reply.type('text/html').send('<h1>ReproCase</h1><p>Build the interface with <code>npm run build</code>, or start development with <code>npm run dev</code>.</p>'));
   }
-  const address = await app.listen({ host: '127.0.0.1', port: options.port ?? 4317 });
+  const bound = await app.listen({ host: listenHost, port: options.port ?? 4317 });
+  const port = new URL(bound).port;
+  const address = listenHost === '127.0.0.1' ? bound : `http://localhost:${port}`;
   webOrigin = address;
+  allowedOrigins = new Set(listenHost === '127.0.0.1' ? [address] : [address, `http://127.0.0.1:${port}`]);
   if (options.demo) await service.startDemo(options.mode ?? 'vulnerable');
   const runtimePath = join(workspace, 'runtime.json');
   if (!options.memory && options.writeRuntime !== false) writeFileSync(runtimePath, JSON.stringify({ origin: address, token, pid: process.pid }), { mode: 0o600 });

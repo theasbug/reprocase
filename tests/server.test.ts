@@ -45,3 +45,24 @@ describe('authenticated local application service', () => {
     await server.service.waitRun(initial.id);
   });
 });
+
+describe('container listen mode', () => {
+  afterEach(() => { delete process.env.REPROCASE_LISTEN_HOST; });
+  it('rejects unexpected listen hosts', async () => {
+    process.env.REPROCASE_LISTEN_HOST = '192.168.1.5';
+    await expect(createServer({ memory: true, port: 0 })).rejects.toThrow(/REPROCASE_LISTEN_HOST/);
+  });
+  it('listens on all interfaces but keeps loopback Host, Origin and token checks', async () => {
+    process.env.REPROCASE_LISTEN_HOST = '0.0.0.0';
+    const server = await createServer({ memory: true, port: 0 });
+    try {
+      expect(server.origin).toMatch(/^http:\/\/localhost:\d+$/);
+      const port = new URL(server.origin).port;
+      const auth = { authorization: `Bearer ${server.token}` };
+      expect((await fetch(`http://127.0.0.1:${port}/api/state`, { headers: { ...auth, origin: `http://127.0.0.1:${port}` } })).status).toBe(200);
+      expect((await server.app.inject({ url: '/api/state', headers: { ...auth, host: `localhost:${port}`, origin: 'http://evil.test' } })).statusCode).toBe(403);
+      expect((await server.app.inject({ url: '/api/state', headers: { ...auth, host: 'evil.test' } })).statusCode).toBe(403);
+      expect((await server.app.inject({ url: '/api/state', headers: { host: `localhost:${port}` } })).statusCode).toBe(401);
+    } finally { await server.close(); }
+  });
+});

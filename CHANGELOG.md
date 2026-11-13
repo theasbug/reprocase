@@ -6,6 +6,8 @@
 - Added `templates/` with schema-valid horizontal IDOR (read/write) and vertical privilege (BFLA) cases.
 - Added a tag-triggered release workflow that builds, smoke-tests and checksums the Windows archive, records a GitHub build-provenance attestation and creates a draft release.
 - Added Dependabot configuration and resolved moderate `minimatch`/`glob` advisories in Electron packaging dependencies (`npm audit`: 0).
+- Added a Docker image and `compose.yaml` (web workbench, case runner and demo lab with headless Chromium). The new `REPROCASE_LISTEN_HOST` variable lets the service listen on all interfaces inside a container. Host, Origin and token checks still only accept loopback clients. CI builds and smoke-tests the image, and tagged releases publish it to GHCR with provenance.
+- Added a Burp Suite extension (`integrations/burp`, Montoya API) with **Send to ReproCase** in the context menu. It imports the selected requests as a case draft through the local API and refuses non-loopback addresses. CI builds the jar, and releases attach it.
 - Moved the "HTTP 200 is not proof" article to `docs/articles/` and the beta checklist to `docs/BETA-TEST.md`. Removed maintainer campaign files from the repository.
 
 ## 1.1.0-beta.1

@@ -13,7 +13,8 @@
 
 <p align="center">
   <a href="https://github.com/theasbug/reprocase/releases/tag/v1.1.0-beta.1"><strong>Download for Windows</strong></a> ·
-  <a href="#run-from-source-linux-macos-windows">Run from source</a> ·
+  <a href="#docker-linux-macos-windows">Docker</a> ·
+  <a href="integrations/burp/">Burp extension</a> ·
   <a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4">56s demo</a> ·
   <a href="templates/">Case templates</a> ·
   <a href="docs/QUICKSTART.tr.md">Türkçe</a>
@@ -53,6 +54,16 @@ Every run ends in exactly one verdict: **`reproduced`**, **`not_reproduced`**, o
 
 The app bundles Electron and Chromium, so you do not need Node.js, Python or Docker. The executable is **not code-signed yet**. Check the archive before you run it ([how to verify](#verify-a-download)).
 
+### Docker (Linux, macOS, Windows)
+
+~~~sh
+git clone https://github.com/theasbug/reprocase.git
+cd reprocase
+docker compose up
+~~~
+
+Open the `http://localhost:4317/#token=…` URL from the logs. The container starts the built-in demo lab with headless Chromium, and data is kept in the `reprocase-data` volume. The port is published on `127.0.0.1` only. For your own targets, change the compose `command` to `serve`.
+
 ### Run from source (Linux, macOS, Windows)
 
 Requires **Node.js 24.18+**.
@@ -87,6 +98,10 @@ Open the local URL printed by the command. On Linux, first run `npx playwright i
 <sub>Simplified. See the full executable [example](examples/cross-tenant.reprocase.json) and the [case format](docs/CASE-FORMAT.md).</sub>
 
 Start from a template in [`templates/`](templates/): horizontal IDOR (read and write) and vertical privilege escalation. Cross-tenant read and write cases are in [`examples/`](examples/). Import a HAR, raw HTTP, Burp XML or Postman capture to draft a case from your own traffic.
+
+### From Burp Suite in one click
+
+Install the [ReproCase Burp extension](integrations/burp/), then right-click any request in Proxy history or Repeater and choose **Send to ReproCase**. The selection becomes a case draft. Nothing is sent to the target until you bind your accounts and run it.
 
 ## What is inside
 
