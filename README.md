@@ -6,13 +6,13 @@
 
 <p align="center">
   <a href="https://github.com/theasbug/reprocase/actions/workflows/ci.yml"><img alt="Build and tests" src="https://github.com/theasbug/reprocase/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://github.com/theasbug/reprocase/releases/tag/v1.1.0-beta.1"><img alt="Version 1.1.0 beta 1" src="https://img.shields.io/badge/release-1.1.0--beta.1-a59aff"></a>
+  <a href="https://github.com/theasbug/reprocase/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/theasbug/reprocase?include_prereleases&label=release&color=a59aff"></a>
   <a href="LICENSE"><img alt="Apache 2.0 license" src="https://img.shields.io/badge/license-Apache--2.0-6bd5ad"></a>
   <img alt="No API key needed for the demo" src="https://img.shields.io/badge/demo-no%20API%20key-72b7ff">
 </p>
 
 <p align="center">
-  <a href="https://github.com/theasbug/reprocase/releases/tag/v1.1.0-beta.1"><strong>Download for Windows</strong></a> ·
+  <a href="https://github.com/theasbug/reprocase/releases"><strong>Download for Windows</strong></a> ·
   <a href="#docker-linux-macos-windows">Docker</a> ·
   <a href="integrations/burp/">Burp extension</a> ·
   <a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4">56s demo</a> ·
@@ -48,7 +48,7 @@ Every run ends in exactly one verdict: **`reproduced`**, **`not_reproduced`**, o
 
 ### Windows portable
 
-1. Download **[ReproCase-1.1.0-beta.1-Windows-x64.zip](https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-1.1.0-beta.1-Windows-x64.zip)** and extract the **whole** archive into a writable folder.
+1. Download the newest **`ReproCase-<version>-Windows-x64.zip`** from [Releases](https://github.com/theasbug/reprocase/releases) and extract the **whole** archive into a writable folder.
 2. Open `ReproCase.exe` and load the built-in local demo. Review the accounts and the access policy, approve, then run. The expected result is **Reproduced**.
 3. Choose **Fresh identities** and run again (still **Reproduced**). Switch to **Secure target** and run again (**Not reproduced**).
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0-beta.2
 
 - README focused on the core promise: reproducible IDOR/BOLA proofs. Added a 30-second case walkthrough, an audience section, download verification and a note on how the project is built. AI and recon extras moved into a collapsible section.
 - Added `templates/` with schema-valid horizontal IDOR (read/write) and vertical privilege (BFLA) cases.
