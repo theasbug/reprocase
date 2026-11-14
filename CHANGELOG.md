@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+Fixes from an external code review:
+- **Security:** account identity checks now go through the program's scope, exclusion, rate and budget policy everywhere: Verify on my site, Quick proof, connecting an account and re-verifying it. Before, the first identity request could reach an endpoint that the program excludes. A scope or budget refusal is final, and no other identity paths are tried around it.
+- Quick proof keeps a form-encoded creation request as a form in the saved case, so runs work on APIs that accept only forms.
+- Quick proof deletes its observation object even when a later read fails. If the deletion doesn't succeed, it shows the object's address so you can remove it. If the new object's ID can't be found at all, the error says that an object was probably created.
+
 ## 1.1.0-beta.6
 
 - **macOS and Linux desktop apps.** Every release now includes `macOS-arm64` (Apple silicon), `macOS-x64` (Intel) and `Linux-x64` packages next to Windows. Each package is built on its own platform, smoke-tested (it starts, uses the bundled Chromium and runs the demo to a verdict) and covered by one SHA256SUMS file and build-provenance attestations.
