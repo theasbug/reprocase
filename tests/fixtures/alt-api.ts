@@ -7,6 +7,7 @@
  * - denial with 401
  */
 import Fastify from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import { randomUUID } from 'node:crypto';
 
 type Mode = 'vulnerable' | 'secure';
@@ -23,6 +24,8 @@ export async function startAltApi(mode: Mode = 'vulnerable') {
   let requests = 0;
 
   const app = Fastify({ logger: false });
+  // Like a real API, the lab limits request rates. The limit is far above what the tests send.
+  await app.register(rateLimit, { max: 2000, timeWindow: '1 minute' });
   app.addHook('onRequest', async () => { requests++; });
   const who = (req: any) => users.get(String(req.headers['x-auth-token'] ?? ''));
   const auth = (req: any, reply: any) => { const u = who(req); if (!u) reply.code(401).send({ message: 'unauthorized' }); return u; };
