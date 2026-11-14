@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync, unlinkSync } from '
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
-import { authoringSchema, calculateCvss31, caseSchema, providerInputSchema, runConfigSchema, validateCase,mcpConfigSchema,type AgentTool,type AgentToolOutput } from '@reprocase/core';
+import { authoringSchema, calculateCvss31, parseCandidates, caseSchema, providerInputSchema, runConfigSchema, validateCase,mcpConfigSchema,type AgentTool,type AgentToolOutput } from '@reprocase/core';
 import type { SecretVault } from '../../../packages/ai/src/providers.ts';
 import { Store } from './store.ts';
 import { ReproService } from './service.ts';
@@ -78,6 +78,7 @@ export async function createServer(options: { workspace?: string; port?: number;
     if (body.case.id !== request.params.id) throw new Error('Case identifier does not match the route');
     return service.saveCase(body.case, body.expectedRevision);
   });
+  app.post('/api/candidates', request => { const body = z.strictObject({ kind: z.enum(['arjun', 'ffuf']), data: z.string() }).parse(request.body); return parseCandidates(body.kind, body.data); });
   app.post('/api/import', request => { const body = z.strictObject({ kind: z.enum(['har', 'http', 'package', 'burp', 'postman']), data: z.string() }).parse(request.body); return service.import(body.kind, body.data); });
   app.post<{ Params: { id: string } }>('/api/cases/:id/traffic/draft', request => service.draftFromLiveTraffic(request.params.id));
   app.post('/api/demo/start', request => { const body = z.object({ mode: z.enum(['vulnerable', 'secure']).default('vulnerable') }).parse(request.body ?? {}); return service.startDemo(body.mode); });

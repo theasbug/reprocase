@@ -2,7 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { VERSION, caseSchema, importTraffic, validateCase, type CaseSpec, type ImportKind, type Verdict } from '@reprocase/core';
+import { VERSION, caseSchema, importTraffic, parseCandidates, validateCase, type CandidateKind, type IdorCandidate, type CaseSpec, type ImportKind, type Verdict } from '@reprocase/core';
 import { createServer, projectRoot } from './server.ts';
 import { ReproService } from './service.ts';
 import { Store } from './store.ts';
@@ -32,12 +32,24 @@ function loadCase(service: ReproService, input: string): CaseSpec {
   const current = service.store.getCase(spec.id);
   return service.saveCase(spec, current?.revision);
 }
+/** Lists ranked IDOR candidates from Arjun/ffuf JSON, or returns the raw request of the one chosen with --draft N. */
+function candidatesOf(input: string, flags: Record<string, string | boolean>): { list?: unknown; draft?: IdorCandidate } {
+  const data = readFileSync(input, 'utf8');
+  const kind = (typeof flags.kind === 'string' ? flags.kind : /"results"\s*:/.test(data) ? 'ffuf' : 'arjun') as CandidateKind;
+  if (kind !== 'arjun' && kind !== 'ffuf') throw new Error('candidates supports --kind arjun or --kind ffuf');
+  const result = parseCandidates(kind, data);
+  if (flags.draft === undefined) return { list: { ...result, candidates: result.candidates.map(({ raw, ...c }) => c) } };
+  const draft = result.candidates.find(c => c.index === Number(flags.draft));
+  if (!draft) throw new Error(`No candidate ${flags.draft}. Run without --draft to list candidates.`);
+  return { draft };
+}
 function printJSON(value: unknown, flags: Record<string, string | boolean>) {
   const output = JSON.stringify(value, null, 2);
   if (typeof flags.output === 'string') { mkdirSync(dirname(resolve(flags.output)), { recursive: true }); writeFileSync(flags.output, output); }
   else console.log(output);
 }
 async function liveCommand(command: string, input: string, flags: Record<string, string | boolean>, call: NonNullable<Awaited<ReturnType<typeof connectRuntime>>>, second?: string) {
+  if (command === 'candidates') { const { list, draft } = candidatesOf(input, flags); printJSON(draft ? await call('/api/import', 'POST', { kind: 'http', data: draft.raw }) : list, flags); return; }
   if (command === 'create') { printJSON(await call('/api/cases/build', 'POST', { settings: readJSON(input), ...(typeof flags.target === 'string' ? { targetOrigin: flags.target } : {}) }), flags); return; }
   if (command === 'recon') { printJSON(existsSync(input) ? await call('/api/recon/extract', 'POST', { sourceText: readFileSync(input, 'utf8'), sourceLabel: input }) : await call('/api/recon/probe', 'POST', { origin: input }), flags); return; }
   if (command === 'plan') {
@@ -104,7 +116,7 @@ export async function main(argv = process.argv.slice(2)) {
   const command = positional[0] ?? 'serve';
   const workspace = resolve(String(flags.workspace ?? join(projectRoot, '.reprocase')));
   if (['help', '--help', '-h'].includes(command) || flags.help) {
-    console.log(`ReproCase ${VERSION}\n\nserve | demo [--dev] [--workspace DIR] [--port 4317] [--mode secure|vulnerable]\nrecon ORIGIN_OR_FILE [--output FILE]\ncreate SETTINGS_FILE [--target ORIGIN]\nimport FILE [--kind har|http|package|burp|postman]\nvalidate CASE_ID_OR_FILE\nplan CASE_ID --targets FILE_OR_JSON [--budget 100]\nrun CASE_ID_OR_FILE --targets FILE_OR_JSON --bindings FILE [--expect reproduced|not_reproduced|inconclusive]\nmatrix CASE_ID_OR_FILE --targets FILE_OR_JSON --bindings FILE [--output FILE]\ncompare BEFORE_RUN_ID AFTER_RUN_ID [--output FILE]\nexport CASE_ID [--run RUN_ID] [--format package|html|markdown|bounty|hurl|playwright] [--output FILE]\nmcp [--workspace DIR]   (attach to a running local service)`);
+    console.log(`ReproCase ${VERSION}\n\nserve | demo [--dev] [--workspace DIR] [--port 4317] [--mode secure|vulnerable]\nrecon ORIGIN_OR_FILE [--output FILE]\ncreate SETTINGS_FILE [--target ORIGIN]\nimport FILE [--kind har|http|package|burp|postman]\ncandidates FILE [--kind arjun|ffuf] [--draft N]   (rank IDOR leads; --draft N creates a case draft)\nvalidate CASE_ID_OR_FILE\nplan CASE_ID --targets FILE_OR_JSON [--budget 100]\nrun CASE_ID_OR_FILE --targets FILE_OR_JSON --bindings FILE [--expect reproduced|not_reproduced|inconclusive]\nmatrix CASE_ID_OR_FILE --targets FILE_OR_JSON --bindings FILE [--output FILE]\ncompare BEFORE_RUN_ID AFTER_RUN_ID [--output FILE]\nexport CASE_ID [--run RUN_ID] [--format package|html|markdown|bounty|hurl|playwright] [--output FILE]\nmcp [--workspace DIR]   (attach to a running local service)`);
     return;
   }
   if (command === 'mcp') { await startMcp(workspace); return; }
@@ -124,6 +136,7 @@ export async function main(argv = process.argv.slice(2)) {
   await service.initialize();
   service.store.recoverInterruptedRuns();
   try {
+    if (command === 'candidates') { const { list, draft } = candidatesOf(input, flags); printJSON(draft ? service.import('http', draft.raw) : list, flags); return; }
     if (command === 'create') { printJSON(service.build(readJSON(input), typeof flags.target === 'string' ? flags.target : undefined), flags); return; }
     if (command === 'recon') { printJSON(existsSync(input) ? { endpoints: service.extractRecon(readFileSync(input, 'utf8'), input) } : await service.probeTarget(input), flags); return; }
     if (command === 'plan') {
