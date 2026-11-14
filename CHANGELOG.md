@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0-beta.7
 
 Fixes from an external code review:
 - **Security:** account identity checks now go through the program's scope, exclusion, rate and budget policy everywhere: Verify on my site, Quick proof, connecting an account and re-verifying it. Before, the first identity request could reach an endpoint that the program excludes. A scope or budget refusal is final, and no other identity paths are tried around it.
