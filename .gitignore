@@ -31,3 +31,6 @@ Thumbs.db
 # Burp extension build output
 integrations/burp/build/
 integrations/burp/.gradle/
+
+# Screenshots written by e2e/desktop tests
+docs/screenshots/
