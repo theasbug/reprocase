@@ -26,7 +26,7 @@ export function validateCase(input: unknown): ValidationIssue[] {
   }
   const inspectRefs = (value: unknown, path: string) => {
     for (const ref of refs(value)) {
-      const parentStep = /^steps\.([^.]+)\.(body|headers|concurrency)(\.|$)/.exec(ref);
+      const parentStep = /^steps\.([^.]+)\.(body|headers|concurrency|text)(\.|$)/.exec(ref);
       if (!available.has(ref) && !(parentStep && available.has(`steps.${parentStep[1]}.status`))) error(path, `Reference is missing or used before its producer: ${ref}`);
     }
   };
@@ -102,7 +102,7 @@ export function validateCase(input: unknown): ValidationIssue[] {
   }
   const observedWitness = spec.witness.success.some(condition => {
     const used = refs(condition);
-    const bodyWitness = condition.op !== 'exists' && used.some(r => /^steps\.([^.]+)\.body(?:\.|$)/.test(r) && probeIds.has(r.split('.')[1])) && used.some(r => r === 'run.marker' || r.startsWith('captures.') || r.startsWith('actors.'));
+    const bodyWitness = condition.op !== 'exists' && used.some(r => /^steps\.([^.]+)\.(?:body(?:\.|$)|text$)/.test(r) && probeIds.has(r.split('.')[1])) && used.some(r => r === 'run.marker' || r.startsWith('captures.') || r.startsWith('actors.'));
     const concurrencyWitness = condition.op !== 'exists' && used.some(r => /^steps\.([^.]+)\.concurrency\.succeeded$/.test(r) && probeIds.has(r.split('.')[1]));
     return bodyWitness || concurrencyWitness;
   });

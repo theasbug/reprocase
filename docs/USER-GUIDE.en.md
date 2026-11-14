@@ -118,6 +118,12 @@ Switch the demo to secure mode and repeat. With correct setup, the same package 
 
 ## 15. Create or import a case
 
+**Fastest path: Quick proof.** On the start screen choose **Quick proof**. Enter the target origin and a session for two test accounts: a header such as `Authorization: Bearer …` or `X-Auth-Token`, a Bearer token, or a cookie. ReproCase finds who each account is, then asks for two pasted requests: the one that creates the object and the vulnerable one that reads it by ID. It learns the new object's ID, owner and a marker field, detects CSRF, previews the other account's access and saves a case. Nothing here needs JSON Pointers. Quick proof covers read IDORs with the ID in the URL path.
+
+**Triagers:** after importing a reporter's package, use **Verify on my site** (it opens automatically). Enter your API origin and one credential per test account. If your identity endpoint differs, ReproCase maps it and saves a new revision. Read and acknowledge the policy yourself; the reporter's acknowledgement is not imported.
+
+**Advanced case:** the full wizard below is for write IDORs, role checks and unusual APIs.
+
 Use the new case wizard to name the case, set its API origin, describe account roles and state the expected access policy. Roles can be owner and other. The relationships should retain their meaning with new accounts.
 
 Import HAR, raw HTTP or selected Chromium traffic. Importing alone sends no network requests. Replace old cookies, tokens and object IDs with explicit dependencies before sharing. Review AI suggestions before applying them.

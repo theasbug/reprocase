@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- **Quick proof.** A four-step wizard that turns two test accounts and two pasted requests into a case. It finds the identity endpoint and fields by comparing both accounts. From one observed creation it learns the new object's ID, owner and a marker field, detects CSRF tokens, previews the other account's access, cleans up and saves an unacknowledged case. Corrections are made by picking fields; no JSON Pointers. It is the primary action on the start screen and on IDOR candidates. API: `/api/quickproof/*`.
+- **Verify on my site** for triagers. An imported package binds every account to one origin with a header, token or cookie. If the identity endpoint differs, it is detected and saved as a new revision. API: `/api/cases/:id/verify-on-site`.
+- Account sessions can use any custom auth header (for example `X-Auth-Token`, `Authorization: Token …`), not only Bearer tokens and cookies.
+- New `steps.<id>.text` reference: the bounded raw response. A read witness can check that the response contains the run marker anywhere, so no response field location is needed.
+- Imported packages no longer carry the reporter's policy acknowledgement. Imported and recon drafts no longer require a `/role` identity field.
+- A second test lab with a differently shaped API (`tests/fixtures/alt-api.ts`). It proves inference end to end: reproduced, not reproduced, cross-user and same-person inconclusive.
+
 ## 1.1.0-beta.3
 
 - **IDOR candidates from Arjun and ffuf.** Import evidence has new **Arjun** (`-oJ`) and **ffuf** (`-of json`) tabs. The output is ranked offline by identifier signals: ID-like parameter names, object IDs in paths, and fuzzed IDs that returned 2xx. Each lead becomes a case draft with one click. Also available as `cli candidates FILE [--draft N]` and the MCP tool `idor_candidates`. Captured cookies and tokens are never copied.

@@ -118,6 +118,12 @@ Demoyu güvenli moda alıp tekrar çalıştır. Hazırlık doğruysa aynı paket
 
 ## 15. Kendi vakanı oluştur veya içe aktar
 
+**En hızlı yol: Hızlı kanıt.** Başlangıç ekranında **Hızlı kanıt**'ı seç. Hedef adresini ve kontrol ettiğin iki test hesabının oturumunu gir: `Authorization: Bearer …` veya `X-Auth-Token` gibi bir başlık, Bearer token ya da cookie. ReproCase her hesabın kim olduğunu bulur, sonra yapıştırılmış iki istek ister: nesneyi oluşturan istek ve nesneyi ID ile okuyan açıklı istek. Yeni nesnenin ID'sini, sahibini ve işaret alanını öğrenir, CSRF'yi algılar, diğer hesabın erişimini ön izler ve vakayı kaydeder. JSON Pointer yazmak gerekmez. Hızlı kanıt, ID'si URL yolunda olan okuma IDOR'larını kapsar.
+
+**Triager'lar:** raporlayanın paketini içe aktardıktan sonra **Kendi sitemde doğrula** penceresini kullan (otomatik açılır). API adresini ve her test hesabı için bir oturum bilgisi gir. Kimlik uç noktan farklıysa ReproCase onu bulur ve yeni bir revizyon kaydeder. Politikayı kendin okuyup onayla; raporlayanın onayı içe aktarılmaz.
+
+**Gelişmiş vaka:** aşağıdaki tam sihirbaz yazma IDOR'ları, rol kontrolleri ve alışılmadık API'ler içindir.
+
 Yeni vaka sihirbazında vakaya ad ver, hedef API kaynağını belirt, hesap rollerini ve beklenen erişim kuralını yaz. Rol bir insan adı olmak zorunda değildir: owner ve other gibi isimler kullanabilirsin. Senaryo yeni hesaplara geçince de aynı ilişkiyi korumalıdır.
 
 HAR, ham HTTP veya seçili Chromium trafiğini içe aktarabilirsin. İçe aktarma tek başına ağ isteği çalıştırmaz. Kaydedilen eski cookie, token ve nesne ID’lerini paylaşılacak paket için bağımlılıklara dönüştür. AI önerilerini uygulamadan önce incele.

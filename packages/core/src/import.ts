@@ -133,7 +133,9 @@ export function importTraffic(kind: ImportKind, data: string): ImportResult {
   if (Buffer.byteLength(data, 'utf8') > LIMIT) throw new Error('Import is limited to 50 MiB. Select only the traffic relevant to this case.');
   if (kind === 'package') {
     const pack = packageSchema.parse(JSON.parse(data));
-    return { case: pack.case, warnings: ['Imported evidence is a historical observation. Connect your own accounts and run the case to obtain a new verdict.'], redactions: pack.redactions };
+    // The reporter's acknowledgement does not carry over: the recipient reviews the claimed policy.
+    const reviewed = { ...pack.case, policy: { ...pack.case.policy, acknowledged: false } };
+    return { case: reviewed, warnings: ['Imported evidence is a historical observation. Connect your own accounts and run the case to obtain a new verdict.', 'Read the reporter’s access policy and acknowledge it yourself before running.'], redactions: pack.redactions };
   }
   const source = kind === 'har' ? harRequests(JSON.parse(data)) : kind === 'burp' ? burpRequests(data) : kind === 'postman' ? postmanRequests(JSON.parse(data)) : rawRequest(data);
   if (!source.length) throw new Error('The capture contains no HTTP requests.');
@@ -272,8 +274,8 @@ export function importTraffic(kind: ImportKind, data: string): ImportResult {
     description: 'Draft reconstructed from selected traffic. Source credentials, target origins, and recognized source identifiers have been removed. Review the inferred bindings.',
     policy: { statement: 'Describe the intended access boundary and confirm that these test accounts should not have access to each other’s private resources.', acknowledged: false },
     actors: [
-      { id: 'owner', label: 'Resource owner', color: '#4fd1c5', identity: { origin: 'api', path: '/me', idPointer: '/id', tenantPointer: '/tenant', rolePointer: '/role' } },
-      { id: 'researcher', label: 'Researcher', color: '#b794f4', identity: { origin: 'api', path: '/me', idPointer: '/id', tenantPointer: '/tenant', rolePointer: '/role' } },
+      { id: 'owner', label: 'Resource owner', color: '#4fd1c5', identity: { origin: 'api', path: '/me', idPointer: '/id', tenantPointer: '/tenant' } },
+      { id: 'researcher', label: 'Researcher', color: '#b794f4', identity: { origin: 'api', path: '/me', idPointer: '/id', tenantPointer: '/tenant' } },
     ],
     origins: [...originNames.values()].map((id, i) => ({ id, label: `API ${i + 1}` })),
     preconditions: [{ id: 'distinct-identities', label: 'The accounts represent different users', op: 'neq', left: { $ref: 'actors.owner.id' }, right: { $ref: 'actors.researcher.id' } }],
