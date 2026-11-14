@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/theasbug/reprocase/releases"><strong>Download for Windows</strong></a> ·
+  <a href="https://github.com/theasbug/reprocase/releases"><strong>Download (Windows · macOS · Linux)</strong></a> ·
   <a href="#docker-linux-macos-windows">Docker</a> ·
   <a href="integrations/burp/">Burp extension</a> ·
   <a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4">56s demo</a> ·
@@ -63,13 +63,23 @@ Import the reporter's `.reprocase.json`. The **Verify on my site** dialog asks f
 
 ## Try it in two minutes
 
-### Windows portable
+### Desktop app (Windows, macOS, Linux)
 
-1. Download the newest **`ReproCase-<version>-Windows-x64.zip`** from [Releases](https://github.com/theasbug/reprocase/releases) and extract the **whole** archive into a writable folder.
-2. Open `ReproCase.exe` and load the built-in local demo. Review the accounts and the access policy, approve, then run. The expected result is **Reproduced**.
-3. Choose **Fresh identities** and run again (still **Reproduced**). Switch to **Secure target** and run again (**Not reproduced**).
+Download the newest file for your computer from [Releases](https://github.com/theasbug/reprocase/releases):
 
-The app bundles Electron and Chromium, so you do not need Node.js, Python or Docker. The executable is **not code-signed yet**. Check the archive before you run it ([how to verify](#verify-a-download)).
+| Your computer | File | How to open |
+|---|---|---|
+| Windows | `ReproCase-<version>-Windows-x64.zip` | Extract the **whole** archive and open `ReproCase.exe`. |
+| Mac with Apple silicon (M1–M4) | `ReproCase-<version>-macOS-arm64.zip` | Unzip, move **ReproCase** to Applications, then **right-click → Open** the first time. |
+| Mac with Intel | `ReproCase-<version>-macOS-x64.zip` | Same as above. |
+| Linux (x64) | `ReproCase-<version>-Linux-x64.tar.gz` | Extract and run `./ReproCase` inside the folder. |
+
+Then load the built-in local demo, approve and run (**Reproduced**). Choose **Fresh identities** and run again (still **Reproduced**), then switch to **Secure target** (**Not reproduced**).
+
+The app bundles Electron and Chromium, so you do not need Node.js, Python or Docker. It is **not code-signed yet**, so check the archive before you run it ([how to verify](#verify-a-download)).
+
+- **macOS:** because the app is unsigned, macOS blocks a normal double-click the first time. Right-click → **Open** → **Open**, or run `xattr -dr com.apple.quarantine /Applications/ReproCase.app` once.
+- **Linux:** on Ubuntu 24.04 and newer, Electron apps need permission to use their sandbox. If ReproCase doesn't start, see [Linux notes](docs/DESKTOP.md#linux).
 
 ### Docker (Linux, macOS, Windows)
 
@@ -186,7 +196,7 @@ TypeScript · npm workspaces · Fastify · React/Vite · Zod · SQLite · Playwr
 npm run typecheck && npm test && npm run test:e2e
 ~~~
 
-GitHub Actions tests the source on Linux and Windows, then packages and smoke-tests the Windows executable. Desktop details are in [docs/DESKTOP.md](docs/DESKTOP.md) and release checks in [docs/RELEASE-CHECKS.md](docs/RELEASE-CHECKS.md).
+GitHub Actions tests the source on Linux and Windows and packages and smoke-tests the Windows and Linux apps on every change; releases also build and smoke-test both macOS apps. Desktop details are in [docs/DESKTOP.md](docs/DESKTOP.md) and release checks in [docs/RELEASE-CHECKS.md](docs/RELEASE-CHECKS.md).
 
 **About how it is built.** ReproCase is developed with heavy use of AI coding assistants. Verdicts come from deterministic, tested core checks, and [VERIFICATION.md](docs/VERIFICATION.md) separates what has been tested from what has not. Reviews and bug reports are especially welcome.
 

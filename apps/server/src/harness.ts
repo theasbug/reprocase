@@ -64,7 +64,7 @@ export class Harness implements AgentRuntime {
     this.root=resolve(options.root);
     this.permissions=new Permissions(options.permissionMode??'ask',options.savePermissionMode);
   }
-  tools(){return [...builtins.filter(t=>this.options.desktop||!t.name.startsWith('filesystem_')&&!t.name.startsWith('desktop_')&&t.name!=='terminal_run'),...(this.options.desktop?this.options.computer?.tools()??[]:[]),...this.options.mcp.tools()];}
+  tools(){return [...builtins.filter(t=>(this.options.desktop||!t.name.startsWith('filesystem_')&&!t.name.startsWith('desktop_')&&t.name!=='terminal_run')&&(platform()==='win32'||!t.name.startsWith('desktop_'))),...(this.options.desktop?this.options.computer?.tools()??[]:[]),...this.options.mcp.tools()];}
   environment(){return {application:'ReproCase',desktop:this.options.desktop,os:platform(),osVersion:release(),shell:platform()==='win32'?'PowerShell':'sh',workingDirectory:this.root,permissionMode:this.permissions.getMode(),tools:this.tools().map(t=>t.name)};}
   async setRoot(path:string){const actual=await realpath(resolve(path));if(!(await stat(actual)).isDirectory())throw new Error('Select a directory');this.root=actual;this.options.saveRoot(actual);return this.environment();}
   private safe(value:unknown){return createRedactor(this.options.secrets()).text(typeof value==='string'?value:JSON.stringify(value,null,2));}
