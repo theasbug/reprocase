@@ -181,7 +181,7 @@ export default function App() {
   const importData = (data = importText, kind: string = importKind) => act('import', async () => {
     const result = await api<{ case: CaseSpec; warnings: string[] }>('/api/import', { kind, data });
     dirty.current = false; savedRef.current = undefined; setSelectedId(result.case.id); setNotice(result.warnings?.join(' · ') ?? '');
-    setModal(kind === 'package' && !state.demo ? 'verifysite' : null); setActorModal(null); setImportText(''); setCandidates(null); setTab(kind === 'package' ? 'overview' : 'specification'); await refresh();
+    setModal(kind === 'package' && !state.demo ? 'verifysite' : null); setActorModal(null); setImportText(''); setCandidates(null); setTab(kind === 'package' && !state.demo ? 'overview' : 'specification'); await refresh();
   });
   const openActor = (actor: ActorSpec) => { setActorModal(actor); setLoginMode('browser'); setLoginOrigin(targets[actor.identity.origin] ?? ''); setLoginData({ username: '', password: '', instructions: '', token: '', cookie: '' }); setBrowserStatus(''); setRecording(false); };
   const browserAction = (kind: string) => act(kind, async () => {
