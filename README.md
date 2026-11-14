@@ -48,7 +48,7 @@ Every run ends in exactly one verdict: **`reproduced`**, **`not_reproduced`**, o
 
 **Quick proof** learns how your target works by watching it, so you never write JSON Pointers:
 
-1. **Accounts:** paste the target origin and a session for two test accounts you control. A header, Bearer token or cookie copied from DevTools all work.
+1. **Accounts:** enter the target origin and connect two test accounts you control. **Sign in** in a separate browser window, or paste a header, Bearer token or cookie from DevTools.
 2. **Identity:** ReproCase calls common "who am I" endpoints (`/me`, `/api/v1/profile`, …) with both accounts and finds the account ID and organization fields by comparing the answers. If a guess is wrong, click the right field.
 3. **Requests:** paste the request that creates the object and the vulnerable request that reads it by ID, straight from Burp or DevTools. Headers are ignored, so captured cookies are never stored.
 4. **Result:** ReproCase creates one object as account A, finds the new ID, the owner field and a text field for the marker, detects CSRF if the creation is rejected, previews account B's access, deletes the object and saves the case. You review the policy, approve and run.
