@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0-beta.6
 
 - **macOS and Linux desktop apps.** Every release now includes `macOS-arm64` (Apple silicon), `macOS-x64` (Intel) and `Linux-x64` packages next to Windows. Each package is built on its own platform, smoke-tested (it starts, uses the bundled Chromium and runs the demo to a verdict) and covered by one SHA256SUMS file and build-provenance attestations.
 - On macOS and Linux, app data lives in the per-user application data folder. Windows stays portable.
