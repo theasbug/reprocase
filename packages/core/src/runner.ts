@@ -8,6 +8,9 @@ import { createRedactor } from './redact.ts';
 export function newRunResult(spec: CaseSpec, id: string = randomUUID()): RunResult {
   return { schemaVersion: 1, id, caseId: spec.id, caseRevision: spec.revision, state: 'running', verdict: 'inconclusive', reason: 'Checking preparation and identity', code: 'running', startedAt: new Date().toISOString(), steps: [], checks: [], identities: {}, requests: 0, cleanupErrors: [], setup: 'created_this_run' };
 }
+/** Raw response text for marker witnesses that do not depend on a field location. Bounded. */
+const TEXT_LIMIT = 1024 * 1024;
+export const responseText = (body: Json): string => (typeof body === 'string' ? body : JSON.stringify(body ?? null)).slice(0, TEXT_LIMIT);
 class RunFailure extends Error { constructor(public code: string, message: string) { super(message); } }
 export async function executeCase(spec: CaseSpec, config: RunConfig, transport: SessionTransport, options: { signal?: AbortSignal; onEvent?: (event: RunEvent) => void; runId?: string } = {}): Promise<RunResult> {
   const run = newRunResult(spec, options.runId);
@@ -89,10 +92,10 @@ export async function executeCase(spec: CaseSpec, config: RunConfig, transport: 
         response = responses.find(r => r.status >= 200 && r.status < 300) ?? responses[0]!;
         const concurrency = { count: responses.length, succeeded: responses.filter(r => r.status >= 200 && r.status < 300).length, statuses: responses.map(r => r.status) };
         row.response = response; row.concurrency = concurrency;
-        values.steps[item.id] = { ...response, concurrency };
+        values.steps[item.id] = { ...response, text: responseText(response.body), concurrency };
       } else {
         response = await send(item.request.actor, request);
-        row.response = response; values.steps[item.id] = response;
+        row.response = response; values.steps[item.id] = { ...response, text: responseText(response.body) };
       }
       for (const capture of item.captures) {
         const source = capture.from === 'status' ? response.status : capture.from === 'headers' ? response.headers : response.body;
