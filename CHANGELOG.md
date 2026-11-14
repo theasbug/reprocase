@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **macOS and Linux desktop apps.** Every release now includes `macOS-arm64` (Apple silicon), `macOS-x64` (Intel) and `Linux-x64` packages next to Windows. Each package is built on its own platform, smoke-tested (it starts, uses the bundled Chromium and runs the demo to a verdict) and covered by one SHA256SUMS file and build-provenance attestations.
+- On macOS and Linux, app data lives in the per-user application data folder. Windows stays portable.
+- Provider keys use the OS key store on every platform: DPAPI, Keychain, or GNOME Keyring/KWallet. On Linux without a keyring, keys are not saved rather than stored as plain text.
+- Native desktop-control tools are offered only on Windows, where they are implemented.
+- CI packages and smoke-tests the Linux app on every pull request.
+
 ## 1.1.0-beta.5
 
 - **Easier to read.** Small interface text is larger throughout (labels, badges, step lists, chat), with the same layout on desktop and mobile.

@@ -1,4 +1,4 @@
-name: Verify source and Windows release
+name: Verify source and desktop apps
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
@@ -53,11 +53,48 @@ jobs:
         shell: pwsh
         run: |
           $env:REPROCASE_DESKTOP_EXE = Join-Path $env:REPROCASE_PACKAGE_OUT 'ReproCase-win32-x64/ReproCase.exe'
-          npm run test:desktop -- desktop.spec.ts
+          npm run test:desktop -- desktop.spec.ts smoke.spec.ts
       - uses: actions/upload-artifact@v7
         with:
           name: windows-beta
           path: release/windows/ReproCase-win32-x64
+  desktop-unix:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, platform: linux, arch: x64 }
+          - { os: macos-latest, platform: darwin, arch: arm64 }
+    runs-on: ${{ matrix.os }}
+    needs: source
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browsers
+      REPROCASE_HEADLESS: '1'
+      REPROCASE_PACKAGE_OUT: ${{ github.workspace }}/release/desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Linux system packages for Chromium, Electron and a virtual display
+        if: runner.os == 'Linux'
+        run: |
+          npx playwright install-deps chromium
+          sudo apt-get install -y xvfb
+          # Ubuntu 24.04 restricts unprivileged user namespaces, which Electron's sandbox needs (CI machine only).
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: npm run browsers:install
+      - run: npm run desktop:package
+      - name: Smoke-test the packaged app
+        run: |
+          base="$REPROCASE_PACKAGE_OUT/ReproCase-${{ matrix.platform }}-${{ matrix.arch }}"
+          if [ "${{ matrix.platform }}" = darwin ]; then
+            REPROCASE_DESKTOP_EXE="$base/ReproCase.app/Contents/MacOS/ReproCase" npm run test:desktop -- smoke.spec.ts
+          else
+            REPROCASE_DESKTOP_EXE="$base/ReproCase" xvfb-run -a npm run test:desktop -- smoke.spec.ts
+          fi
   docker:
     runs-on: ubuntu-latest
     steps:

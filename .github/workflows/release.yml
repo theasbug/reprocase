@@ -1,28 +1,33 @@
 name: Release
-# Builds the Windows portable archive from a tagged commit, records a signed
-# build-provenance attestation and creates a DRAFT GitHub release for review.
+# Builds the desktop app for Windows, macOS (Apple Silicon and Intel) and Linux from a tagged
+# commit, smoke-tests each package on its own platform, records signed build-provenance
+# attestations and creates a DRAFT GitHub release for review.
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing tag to build (for example v1.1.0-beta.2)
+        description: Existing tag to build (for example v1.1.0-beta.6)
         required: true
 permissions:
   contents: read
 jobs:
-  windows:
-    runs-on: windows-latest
-    permissions:
-      contents: write      # create the draft release
-      id-token: write      # sign the provenance attestation
-      attestations: write  # store the attestation
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, platform: win32, arch: x64, label: Windows-x64 }
+          - { os: macos-latest, platform: darwin, arch: arm64, label: macOS-arm64 }
+          - { os: macos-15-intel, platform: darwin, arch: x64, label: macOS-x64 }
+          - { os: ubuntu-latest, platform: linux, arch: x64, label: Linux-x64 }
+    runs-on: ${{ matrix.os }}
     env:
       TAG: ${{ inputs.tag || github.ref_name }}
       PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browsers
       REPROCASE_HEADLESS: '1'
-      REPROCASE_PACKAGE_OUT: ${{ github.workspace }}/release/windows
+      REPROCASE_PACKAGE_OUT: ${{ github.workspace }}/release/desktop
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,39 +37,82 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Linux system packages for Chromium, Electron and a virtual display
+        if: runner.os == 'Linux'
+        run: |
+          npx playwright install-deps chromium
+          sudo apt-get install -y xvfb
+          # Ubuntu 24.04 restricts unprivileged user namespaces, which Electron's sandbox needs.
+          # This changes only the CI machine; the Linux download notes explain the same for users.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: npm run browsers:install
       - run: npm run typecheck
       - run: npm test
       - run: npm run desktop:package
-      - name: Smoke-test the packaged executable
-        shell: pwsh
+      - name: Smoke-test the packaged app
+        shell: bash
         run: |
-          $env:REPROCASE_DESKTOP_EXE = Join-Path $env:REPROCASE_PACKAGE_OUT 'ReproCase-win32-x64/ReproCase.exe'
-          npm run test:desktop -- desktop.spec.ts
-      - name: Create archive and checksums
+          base="$REPROCASE_PACKAGE_OUT/ReproCase-${{ matrix.platform }}-${{ matrix.arch }}"
+          case "${{ matrix.platform }}" in
+            win32)  export REPROCASE_DESKTOP_EXE="$base/ReproCase.exe"; npm run test:desktop -- desktop.spec.ts smoke.spec.ts ;;
+            darwin) export REPROCASE_DESKTOP_EXE="$base/ReproCase.app/Contents/MacOS/ReproCase"; npm run test:desktop -- smoke.spec.ts ;;
+            linux)  export REPROCASE_DESKTOP_EXE="$base/ReproCase"; xvfb-run -a npm run test:desktop -- smoke.spec.ts ;;
+          esac
+      - name: Create the archive
+        shell: bash
+        run: |
+          version="${TAG#v}"
+          base="ReproCase-${{ matrix.platform }}-${{ matrix.arch }}"
+          mkdir -p dist
+          case "${{ matrix.platform }}" in
+            win32)  pwsh -NoProfile -Command "Compress-Archive -Path '$REPROCASE_PACKAGE_OUT/$base/*' -DestinationPath 'dist/ReproCase-$version-${{ matrix.label }}.zip'" ;;
+            # ditto keeps the app bundle's symlinks and metadata intact.
+            darwin) ditto -c -k --sequesterRsrc --keepParent "$REPROCASE_PACKAGE_OUT/$base/ReproCase.app" "dist/ReproCase-$version-${{ matrix.label }}.zip" ;;
+            linux)  tar -C "$REPROCASE_PACKAGE_OUT" -czf "dist/ReproCase-$version-${{ matrix.label }}.tar.gz" "$base" ;;
+          esac
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.label }}
+          path: dist/*
+          if-no-files-found: error
+  publish:
+    runs-on: ubuntu-latest
+    needs: desktop
+    permissions:
+      contents: write      # create the draft release
+      id-token: write      # sign the provenance attestation
+      attestations: write  # store the attestation
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+      - name: Source archive and checksums
         id: dist
-        shell: pwsh
         run: |
-          $version = $env:TAG.TrimStart('v')
-          New-Item -ItemType Directory -Force dist | Out-Null
-          $zip = "dist/ReproCase-$version-Windows-x64.zip"
-          Compress-Archive -Path "$env:REPROCASE_PACKAGE_OUT/ReproCase-win32-x64/*" -DestinationPath $zip
+          version="${TAG#v}"
           git archive --format=zip --prefix="reprocase-$version/" -o "dist/ReproCase-$version-source.zip" HEAD
-          $lines = Get-ChildItem dist -Filter *.zip | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" }
-          $lines | Set-Content -Encoding ascii "dist/ReproCase-$version-SHA256SUMS.txt"
-          "version=$version" >> $env:GITHUB_OUTPUT
+          (cd dist && sha256sum ReproCase-*.zip ReproCase-*.tar.gz > "ReproCase-$version-SHA256SUMS.txt")
+          cat "dist/ReproCase-$version-SHA256SUMS.txt"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
       - uses: actions/attest-build-provenance@v4
         with:
-          subject-path: dist/*.zip
+          subject-path: |
+            dist/*.zip
+            dist/*.tar.gz
       - name: Create draft release
-        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $extra = @()
-          if ($env:TAG -match '-') { $extra += '--prerelease' }
-          $files = (Get-ChildItem dist).FullName
-          gh release create $env:TAG @files --draft --verify-tag --title "ReproCase ${{ steps.dist.outputs.version }}" --generate-notes @extra
+          extra=()
+          case "$TAG" in *-*) extra+=(--prerelease) ;; esac
+          gh release create "$TAG" dist/* --draft --verify-tag --title "ReproCase ${{ steps.dist.outputs.version }}" --generate-notes "${extra[@]}"
   container:
     runs-on: ubuntu-latest
     permissions:
@@ -103,7 +151,7 @@ jobs:
           push-to-registry: true
   burp-extension:
     runs-on: ubuntu-latest
-    needs: windows
+    needs: publish
     permissions:
       contents: write
       id-token: write

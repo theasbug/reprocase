@@ -8,7 +8,10 @@ import { setDefaultResultOrder } from 'node:dns';
 import { ComputerControl } from './computer.ts';
 
 const appRoot = process.env.REPROCASE_APP_ROOT!;
-const dataRoot = process.env.REPROCASE_DESKTOP_WORKSPACE ?? join(app.isPackaged ? dirname(app.getPath('exe')) : appRoot, 'ReproCase-data');
+// Windows stays portable (data next to ReproCase.exe). On macOS the executable lives inside the
+// read-only .app bundle, and Linux archives are often unpacked to read-only places, so data goes to
+// the per-user application data folder (~/Library/Application Support/ReproCase, ~/.config/ReproCase).
+const dataRoot = process.env.REPROCASE_DESKTOP_WORKSPACE ?? (!app.isPackaged ? join(appRoot, 'ReproCase-data') : process.platform === 'win32' ? join(dirname(app.getPath('exe')), 'ReproCase-data') : join(app.getPath('appData'), 'ReproCase'));
 mkdirSync(join(dataRoot, 'electron'), { recursive: true });
 app.setPath('userData', join(dataRoot, 'electron'));
 app.setPath('sessionData', join(dataRoot, 'electron'));
@@ -17,13 +20,16 @@ mkdirSync(join(dataRoot, 'crashes'), { recursive: true }); app.setPath('crashDum
 if (!app.requestSingleInstanceLock()) app.quit();
 else void boot();
 
-export class WindowsVault implements SecretVault {
+/** Provider keys encrypted with the OS store: DPAPI (Windows), Keychain (macOS), libsecret/KWallet (Linux). */
+export class OsVault implements SecretVault {
   constructor(private path: string) {}
   private read(): Record<string, string> { return existsSync(this.path) ? JSON.parse(readFileSync(this.path, 'utf8')) : {}; }
   private write(value: Record<string, string>) { const temp = this.path + '.tmp'; writeFileSync(temp, JSON.stringify(value), { mode: 0o600 }); renameSync(temp, this.path); }
   async get(id: string) { const value = this.read()[id]; return value ? (await safeStorage.decryptStringAsync(Buffer.from(value, 'base64'))).result : undefined; }
   async set(id: string, value: string) {
-    if (!await safeStorage.isAsyncEncryptionAvailable()) throw new Error('Windows key encryption is unavailable. The provider key was not saved.');
+    if (!await safeStorage.isAsyncEncryptionAvailable()) throw new Error('The system key store is unavailable. The provider key was not saved.');
+    // Linux can fall back to an obfuscated plain-text store when no keyring is running. Refuse it.
+    if (process.platform === 'linux' && safeStorage.getSelectedStorageBackend() === 'basic_text') throw new Error('No system keyring (GNOME Keyring or KWallet) is available, so the provider key was not saved. Start a keyring, or use the key for this session only.');
     const stored = this.read(); stored[id] = (await safeStorage.encryptStringAsync(value)).toString('base64'); this.write(stored);
   }
   async delete(id: string) { const stored = this.read(); delete stored[id]; this.write(stored); }
@@ -33,15 +39,17 @@ async function boot() {
   await app.whenReady();
   if(app.isPackaged){
     const manifest=JSON.parse(readFileSync(join(appRoot,'desktop/browser-manifest.json'),'utf8'));
-    if(!/^chromium-\d+$/.test(manifest.resourceDir)||manifest.executable!=='chrome-win64/chrome.exe')throw new Error('Invalid bundled browser manifest');
+    const allowed=/^(?:chrome-win64\/chrome\.exe|chrome-linux(?:64|-arm64)?\/chrome|chrome-mac(?:-arm64|-x64)?\/Chromium\.app\/Contents\/MacOS\/Chromium|chrome-mac(?:-arm64|-x64)?\/Google Chrome for Testing\.app\/Contents\/MacOS\/Google Chrome for Testing)$/;
+    if(!/^chromium-\d+$/.test(manifest.resourceDir)||typeof manifest.executable!=='string'||!allowed.test(manifest.executable))throw new Error('Invalid bundled browser manifest');
     const bundledBrowser=join(process.resourcesPath,manifest.resourceDir,manifest.executable);
     if(!existsSync(bundledBrowser))throw new Error('The bundled Chromium is missing. Extract the complete portable ZIP again.');
     process.env.REPROCASE_CHROMIUM_EXECUTABLE=bundledBrowser;
   }
   const workspace = join(dataRoot, 'workspace');
   mkdirSync(workspace, { recursive: true });
-  const computer=new ComputerControl(appRoot,dataRoot);
-  const server = await createServer({ workspace, port: 0, vault: new WindowsVault(join(dataRoot, 'provider-keys.enc.json')),desktop:true,dataRoot,computer,providerFetch:(input,init)=>net.fetch(input instanceof URL?input.href:input,init as any) });
+  // Native computer control is implemented for Windows only; other platforms don't offer those tools.
+  const computer=process.platform==='win32'?new ComputerControl(appRoot,dataRoot):undefined;
+  const server = await createServer({ workspace, port: 0, vault: new OsVault(join(dataRoot, 'provider-keys.enc.json')),desktop:true,dataRoot,computer,providerFetch:(input,init)=>net.fetch(input instanceof URL?input.href:input,init as any) });
   const window = new BrowserWindow({ width: 1440, height: 1000, minWidth: 920, minHeight: 680, show: false, title: `ReproCase ${VERSION}`, backgroundColor: '#10121b', autoHideMenuBar: true,
     icon: join(appRoot, 'desktop/assets/reprocase.png'),
     webPreferences: { preload: join(appRoot, 'desktop/preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true, spellcheck: true },
