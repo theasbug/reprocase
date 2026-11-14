@@ -176,3 +176,16 @@ export class QuickProof {
     };
   }
 }
+
+export const credentialSchema = z.strictObject({
+  token: z.string().min(1).max(8192).optional(),
+  cookie: z.string().min(1).max(16384).optional(),
+  header: z.strictObject({ name: z.string().regex(/^[A-Za-z0-9-]{1,64}$/), value: z.string().min(1).max(8192) }).optional(),
+}).refine(v => [v.token, v.cookie, v.header].filter(Boolean).length === 1, 'Provide exactly one of token, cookie or header');
+export const verifySiteSchema = z.strictObject({ origin: z.string().min(1), accounts: z.record(z.string(), credentialSchema) });
+export const directInput = (origin: string, c: z.infer<typeof credentialSchema>) => ({
+  origin,
+  ...(c.token ? { token: c.token.replace(/^Bearer\s+/i, '') } : {}),
+  ...(c.cookie ? { cookie: c.cookie } : {}),
+  ...(c.header ? { headers: { [c.header.name]: c.header.value } } : {}),
+});

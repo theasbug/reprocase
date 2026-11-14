@@ -81,3 +81,28 @@ describe('Quick Proof API on a differently shaped app', () => {
     expect((await api(`/api/quickproof/${id}/connect`, { actor: 'owner', token: 'a', cookie: 'b=c' })).status).toBe(400);
   });
 });
+
+describe('Triager: verify an imported package on my own site', () => {
+  it('remaps a different identity endpoint automatically, resets the policy acknowledgement, and reproduces', async () => {
+    lab = await startAltApi('vulnerable');
+    server = await createServer({ memory: true, port: 0 });
+    // A reporter's case whose identity probe matches *their* site, not ours.
+    const { id } = await quickProof(lab.users.alice.token, lab.users.bob.token);
+    const reported = server.service.getCase(id);
+    const foreign = { ...reported, id: 'reported-case', revision: 1, policy: { ...reported.policy, acknowledged: true }, actors: reported.actors.map(a => ({ ...a, identity: { ...a.identity, path: '/me', idPointer: '/id', tenantPointer: '/tenant' } })) };
+    const pack = { format: 'reprocase', schemaVersion: 1, exportedAt: new Date().toISOString(), case: foreign, redactions: [] };
+
+    const imported = await api('/api/import', { kind: 'package', data: JSON.stringify(pack) });
+    expect(imported.status).toBe(200);
+    expect(imported.json.case.policy.acknowledged).toBe(false);
+    expect(imported.json.warnings.join(' ')).toMatch(/acknowledge it yourself/);
+    const caseId = imported.json.case.id;
+
+    const verified = await api(`/api/cases/${caseId}/verify-on-site`, { origin: lab.origin, accounts: { owner: { header: { name: 'X-Auth-Token', value: lab.users.alice.token } }, researcher: { header: { name: 'X-Auth-Token', value: lab.users.bob.token } } } });
+    expect(verified.status, JSON.stringify(verified.json)).toBe(200);
+    expect(verified.json.remapped).toEqual({ path: '/api/v1/profile', idPointer: '/account_id', tenantPointer: '/org/slug' });
+    expect(verified.json.case.revision).toBe(2);
+    const result = await run(caseId);
+    expect(result.verdict, result.reason).toBe('reproduced');
+  });
+});

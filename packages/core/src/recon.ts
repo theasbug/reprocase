@@ -349,7 +349,6 @@ export function buildCaseFromEndpoint(endpoint: ReconEndpoint, titlePrefix?: str
     identityPath: '/me',
     idPointer: '/id',
     tenantPointer: '/tenant',
-    rolePointer: '/role',
     createPath: collectionPath,
     createBody: { title: 'Private Recon Witness', visibility: 'private' },
     readPath: probePath,

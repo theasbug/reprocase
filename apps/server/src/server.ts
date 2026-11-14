@@ -10,7 +10,7 @@ import { authoringSchema, calculateCvss31, parseCandidates, caseSchema, provider
 import type { SecretVault } from '../../../packages/ai/src/providers.ts';
 import { Store } from './store.ts';
 import { ReproService } from './service.ts';
-import { connectSchema as qpConnectSchema, identitySchema as qpIdentitySchema, observeSchema as qpObserveSchema } from './quickproof.ts';
+import { verifySiteSchema, connectSchema as qpConnectSchema, identitySchema as qpIdentitySchema, observeSchema as qpObserveSchema } from './quickproof.ts';
 import { acquireWorkspace } from './runtime.ts';
 
 const projectRoot = process.env.REPROCASE_APP_ROOT ?? fileURLToPath(new URL('../../../', import.meta.url));
@@ -85,6 +85,7 @@ export async function createServer(options: { workspace?: string; port?: number;
   app.post<{ Params: { id: string } }>('/api/quickproof/:id/browser', request => service.quickproof.openBrowser(request.params.id, z.strictObject({ actor: z.enum(['owner', 'researcher']) }).parse(request.body).actor));
   app.post<{ Params: { id: string } }>('/api/quickproof/:id/identity', request => service.quickproof.detectIdentity(request.params.id, qpIdentitySchema.parse(request.body ?? {})));
   app.post<{ Params: { id: string } }>('/api/quickproof/:id/observe', request => service.quickproof.observe(request.params.id, qpObserveSchema.parse(request.body)));
+  app.post<{ Params: { id: string } }>('/api/cases/:id/verify-on-site', request => service.verifyOnSite(request.params.id, verifySiteSchema.parse(request.body)));
   app.post('/api/candidates', request => { const body = z.strictObject({ kind: z.enum(['arjun', 'ffuf']), data: z.string() }).parse(request.body); return parseCandidates(body.kind, body.data); });
   app.post('/api/import', request => { const body = z.strictObject({ kind: z.enum(['har', 'http', 'package', 'burp', 'postman']), data: z.string() }).parse(request.body); return service.import(body.kind, body.data); });
   app.post<{ Params: { id: string } }>('/api/cases/:id/traffic/draft', request => service.draftFromLiveTraffic(request.params.id));

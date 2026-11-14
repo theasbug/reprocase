@@ -5,7 +5,9 @@ import { spawnSync } from 'node:child_process';
 import { platform } from 'node:os';
 import { BrowserManager, type DirectConnection, type BrowserAction } from '@reprocase/browser';
 import { AIManager } from '@reprocase/ai';
-import { QuickProof } from './quickproof.ts';
+import { QuickProof, directInput, type verifySiteSchema } from './quickproof.ts';
+import { IDENTITY_PATHS, inferIdentity } from '@reprocase/core';
+import type { z as zod } from 'zod';
 import {
   analyzeJsBundle,
   analyzeJwtToken,
@@ -472,6 +474,49 @@ export class ReproService {
       /* Keep an unverified binding available for correction in the UI. */
     }
     return this.browsers.status(this.key(caseId, actorId));
+  }
+  /**
+   * Triager shortcut: bind every account of an imported case to one origin and verify it. If the
+   * case's identity endpoint or fields don't match this site, find them by comparing two accounts
+   * and save a new revision, so no JSON editing is needed. Sends only GET identity requests.
+   */
+  async verifyOnSite(caseId: string, input: zod.infer<typeof verifySiteSchema>) {
+    this.idle(caseId);
+    let spec = this.getCase(caseId);
+    if (spec.origins.length !== 1) throw Object.assign(new Error('This shortcut supports cases with one API origin. Use Connect for each account instead.'), { statusCode: 422 });
+    const origin = targetOrigin(input.origin);
+    for (const actor of spec.actors) {
+      const credential = input.accounts[actor.id];
+      if (!credential) throw Object.assign(new Error(`Add a credential for ${actor.label}.`), { statusCode: 422 });
+      await this.browsers.connectDirect(this.key(caseId, actor.id), directInput(origin, credential));
+    }
+    const verifyAll = async () => { for (const actor of spec.actors) await this.browsers.verify(this.key(caseId, actor.id), actor.identity); };
+    let remapped: undefined | { path: string; idPointer: string; tenantPointer?: string };
+    try { await verifyAll(); }
+    catch {
+      if (spec.actors.length < 2) throw Object.assign(new Error('The identity check failed and two accounts are needed to detect it automatically.'), { statusCode: 422 });
+      if (spec.actors.some(x => x.expectedRole !== undefined)) throw Object.assign(new Error('The identity check failed. This case checks roles, so map the identity and role fields in the case editor.'), { statusCode: 422 });
+      const [a, b] = spec.actors;
+      const network = new ScanNetwork(fetch, { ...this.scanOptions(), maxRequests: 60 });
+      const send = async (actorId: string, path: string) => { const url = new URL(path, origin).toString(); await network.authorize(url); return this.browsers.request(this.key(caseId, actorId), { url, method: 'GET', headers: {} }); };
+      for (const path of [...new Set([a!.identity.path, ...IDENTITY_PATHS])]) {
+        const ra = await send(a!.id, path), rb = await send(b!.id, path);
+        if (ra.status !== 200 || rb.status !== 200) continue;
+        const guess = inferIdentity(path, ra.body, rb.body);
+        if (!guess) continue;
+        const needsTenant = spec.actors.some(x => x.identity.tenantPointer !== undefined) || spec.preconditions.some(c => JSON.stringify(c).includes('.tenant'));
+        if (needsTenant && !guess.tenantPointer) continue;
+        remapped = { path: guess.path, idPointer: guess.idPointer, ...(needsTenant && guess.tenantPointer ? { tenantPointer: guess.tenantPointer } : {}) };
+        break;
+      }
+      if (!remapped) throw Object.assign(new Error('The accounts are connected, but their identity could not be found on this site. Check that both credentials are valid, or edit the identity probe in the case.'), { statusCode: 422 });
+      spec = this.store.saveCase({ ...spec, actors: spec.actors.map(actor => ({ ...actor, identity: { ...actor.identity, path: remapped!.path, idPointer: remapped!.idPointer, ...(remapped!.tenantPointer ? { tenantPointer: remapped!.tenantPointer } : {}), rolePointer: undefined } })) }, spec.revision);
+      await verifyAll();
+    }
+    const all = this.store.setting<Record<string, Record<string, string>>>('targets', {});
+    all[caseId] = { [spec.origins[0]!.id]: origin };
+    this.store.setSetting('targets', all);
+    return { case: spec, remapped: remapped ?? null, identities: Object.fromEntries(spec.actors.map(actor => [actor.id, this.browsers.status(this.key(caseId, actor.id))?.identity])) };
   }
   async verifyActor(caseId: string, actorId: string, targets?: Record<string, string>) {
     this.idle(caseId);
