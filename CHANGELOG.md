@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0-beta.5
 
 - **Easier to read.** Small interface text is larger throughout (labels, badges, step lists, chat), with the same layout on desktop and mobile.
 - **"Next step" guide** on every case: shows the first unfinished step (acknowledge the policy, enter the target, connect accounts, approve and run) with a short hint.
