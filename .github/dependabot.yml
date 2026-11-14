@@ -16,3 +16,7 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    ignore:
+      # v6 moved caching into a proprietary component with separate terms of use.
+      - dependency-name: gradle/actions
+        versions: ['>=6']
