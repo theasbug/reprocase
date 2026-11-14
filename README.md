@@ -103,6 +103,17 @@ Start from a template in [`templates/`](templates/): horizontal IDOR (read and w
 
 Install the [ReproCase Burp extension](integrations/burp/), then right-click any request in Proxy history or Repeater and choose **Send to ReproCase**. The selection becomes a case draft. Nothing is sent to the target until you bind your accounts and run it.
 
+### From Arjun and ffuf: find the IDOR leads worth proving
+
+Paste [Arjun](https://github.com/s0md3v/Arjun) (`-oJ`) or [ffuf](https://github.com/ffuf/ffuf) (`-of json`) output into **Import evidence**. ReproCase ranks the results by identifier signals, such as `order_id` parameters, numeric or UUID path segments after `/users/`, and fuzzed IDs that returned 2xx. One click turns a lead into a case draft. Parsing is offline, and captured cookies or tokens are never copied.
+
+<p align="center"><img src="docs/images/idor-candidates.png" alt="Arjun output ranked into IDOR candidates, each with a Create draft button" width="720"></p>
+
+~~~sh
+npm run cli -- candidates arjun.json            # list ranked leads
+npm run cli -- candidates ffuf.json --draft 1   # create a case draft from lead #1
+~~~
+
 ## What is inside
 
 - **Proof engine.** Isolated Chromium account contexts, cookie or Bearer bindings, live preflight, JSON Pointer captures, read and controlled-write cases, actor matrices and run comparisons.

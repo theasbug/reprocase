@@ -23,6 +23,15 @@ npm run cli -- validate cross-tenant-document
 npm run cli -- validate examples/cross-tenant.reprocase.json
 ```
 
+## IDOR candidates from Arjun and ffuf
+
+```sh
+npm run cli -- candidates arjun.json --kind arjun
+npm run cli -- candidates ffuf.json --kind ffuf --draft 1
+```
+
+`candidates` reads Arjun JSON (`arjun -u URL -oJ arjun.json`) or ffuf JSON (`ffuf ... -of json -o ffuf.json`) and lists leads ranked by identifier signals. `--kind` is detected from the content when omitted. `--draft N` creates a case draft from lead `N` through the regular raw-HTTP importer. Parsing sends no requests. Captured `Cookie` and `Authorization` headers are never copied into the draft, so bind your own test accounts before running. The same ranking is available through the MCP tool `idor_candidates` and the **Arjun** and **ffuf** tabs of **Import evidence**.
+
 Imports do not access recorded targets. HAR/HTTP traffic becomes an unapproved draft; review identity probes, actor assignment, resource producers, and witness conditions in the UI. Validation accepts a workspace case ID or a case/package file.
 
 ## Guided creation, preflight and comparison
