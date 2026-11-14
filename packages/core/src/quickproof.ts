@@ -45,6 +45,8 @@ export interface IdentityGuess {
   /** Fields a user can pick from if a guess is wrong. */
   fields: { pointer: string; a: string | number; b?: string | number }[];
   confidence: 'high' | 'medium';
+  rolePointer?: string;
+  roles?: [string, string];
 }
 
 /**
@@ -57,11 +59,16 @@ export function inferIdentity(path: string, bodyA: unknown, bodyB: unknown): Ide
   const shared = a.filter(f => bMap.has(f.pointer));
   const differing = shared.filter(f => String(f.value) !== String(bMap.get(f.pointer)));
   const rankId = (f: FieldValue) => (ID_KEY.test(f.key) ? 0 : /id$/i.test(f.key) ? 1 : /email|login|username/i.test(f.key) ? 3 : 2) * 10 + depthOf(f.pointer);
-  const idField = differing.filter(f => !TENANT_KEY.test(f.pointer.split('/').slice(0, -1).join('/')) || ID_KEY.test(f.key)).sort((x, y) => rankId(x) - rankId(y))[0];
+  const accountField = (f: FieldValue) => !/(?:tenant|org|team|workspace|company|group|realm|project)/i.test(f.pointer.split('/').slice(0, -1).join('/'));
+  const explicitIds = shared.filter(f => ID_KEY.test(f.key) && accountField(f));
+  // A differing role, timestamp or display name must not turn one account into two identities.
+  const candidates = explicitIds.length ? differing.filter(f => explicitIds.some(id => id.pointer === f.pointer)) : differing.filter(f => accountField(f) && !/role|time|nonce|trace|request.?id/i.test(f.key));
+  const idField = candidates.sort((x, y) => rankId(x) - rankId(y))[0];
   if (!idField) return undefined;
   const tenantField = shared
     .filter(f => f.pointer !== idField.pointer && (TENANT_KEY.test(f.key) || (TENANT_KEY.test(f.pointer) && TENANT_LEAF.test(f.key))))
     .sort((x, y) => (/(?:id|slug|key)$/i.test(x.key) ? 0 : 1) - (/(?:id|slug|key)$/i.test(y.key) ? 0 : 1) || depthOf(x.pointer) - depthOf(y.pointer))[0];
+  const role = shared.find(f => /^(?:role|user_type|access_level)$/i.test(f.key) && typeof f.value === 'string' && typeof bMap.get(f.pointer) === 'string');
   return {
     path,
     idPointer: idField.pointer,
@@ -69,6 +76,7 @@ export function inferIdentity(path: string, bodyA: unknown, bodyB: unknown): Ide
     sameTenant: tenantField ? String(tenantField.value) === String(bMap.get(tenantField.pointer)) : true,
     fields: shared.map(f => ({ pointer: f.pointer, a: f.value, b: bMap.get(f.pointer) })),
     confidence: ID_KEY.test(idField.key) ? 'high' : 'medium',
+    ...(role ? { rolePointer: role.pointer, roles: [String(role.value), String(bMap.get(role.pointer))] as [string, string] } : {}),
   };
 }
 
@@ -181,7 +189,7 @@ export function buildQuickProof(input: QuickProofInput, caseId?: string) {
   return { authoring, ...buildCase(authoring, caseId) };
 }
 
-export interface ParsedRequest { method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; path: string; body?: Record<string, unknown>; contentType?: 'json' | 'form' }
+export interface ParsedRequest { method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; path: string; body?: Record<string, unknown>; contentType?: 'json' | 'form'; query?: Record<string, string> }
 
 /**
  * Reads a pasted request: a raw HTTP request (Burp "Copy to file", DevTools) or a single
@@ -200,14 +208,18 @@ export function parseRequest(text: string): ParsedRequest {
   let path = first[2]!;
   if (/^https?:\/\//i.test(path)) { const u = new URL(path); path = u.pathname + u.search; }
   if (!path.startsWith('/')) throw new Error('The request target must be a path or an absolute URL.');
+  if (/^\/\/|[\\#\r\n]/.test(path)) throw new Error('Use a relative API path.');
+  const queryString = path.includes('?') ? path.slice(path.indexOf('?') + 1) : '';
+  const query = queryString ? Object.fromEntries(new URLSearchParams(queryString)) : undefined;
   path = path.split('?')[0]!;
-  if (!rawBody) return { method: method as ParsedRequest['method'], path };
+  const base = { method: method as ParsedRequest['method'], path, ...(query ? { query } : {}) };
+  if (!rawBody) return base;
   try {
     const parsed = JSON.parse(rawBody);
     if (!isObject(parsed)) throw new Error('not an object');
-    return { method: method as ParsedRequest['method'], path, body: parsed, contentType: 'json' };
+    return { ...base, body: parsed, contentType: 'json' };
   } catch {
-    if (/^[^=\s&]+=[^&\n]*(?:&[^=\s&]+=[^&\n]*)*$/.test(rawBody)) return { method: method as ParsedRequest['method'], path, body: Object.fromEntries(new URLSearchParams(rawBody)), contentType: 'form' };
+    if (/^[^=\s&]+=[^&\n]*(?:&[^=\s&]+=[^&\n]*)*$/.test(rawBody)) return { ...base, body: Object.fromEntries(new URLSearchParams(rawBody)), contentType: 'form' };
     throw new Error('The request body must be a JSON object or form fields.');
   }
 }

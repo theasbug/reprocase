@@ -54,9 +54,9 @@ jobs:
         run: |
           base="$REPROCASE_PACKAGE_OUT/ReproCase-${{ matrix.platform }}-${{ matrix.arch }}"
           case "${{ matrix.platform }}" in
-            win32)  export REPROCASE_DESKTOP_EXE="$base/ReproCase.exe"; npm run test:desktop -- desktop.spec.ts smoke.spec.ts ;;
-            darwin) export REPROCASE_DESKTOP_EXE="$base/ReproCase.app/Contents/MacOS/ReproCase"; npm run test:desktop -- smoke.spec.ts ;;
-            linux)  export REPROCASE_DESKTOP_EXE="$base/ReproCase"; xvfb-run -a npm run test:desktop -- smoke.spec.ts ;;
+            win32)  export REPROCASE_DESKTOP_EXE="$base/ReproCase.exe"; npm run test:desktop -- desktop.spec.ts smoke.spec.ts expanded.spec.ts ;;
+            darwin) export REPROCASE_DESKTOP_EXE="$base/ReproCase.app/Contents/MacOS/ReproCase"; npm run test:desktop -- smoke.spec.ts expanded.spec.ts ;;
+            linux)  export REPROCASE_DESKTOP_EXE="$base/ReproCase"; xvfb-run -a npm run test:desktop -- smoke.spec.ts expanded.spec.ts ;;
           esac
       - name: Create the archive
         shell: bash

@@ -15,7 +15,7 @@ import { acquireWorkspace } from './runtime.ts';
 
 const projectRoot = process.env.REPROCASE_APP_ROOT ?? fileURLToPath(new URL('../../../', import.meta.url));
 const originsSchema = z.record(z.string(), z.string());
-const directSchema = z.strictObject({ origin: z.string(), token: z.string().optional(), cookie: z.string().optional(), headers: z.record(z.string(), z.string()).optional(), login: z.strictObject({ path: z.string(), method: z.string().optional(), body: z.any().optional() }).optional() });
+const directSchema = z.strictObject({ origin: z.string(), token: z.string().optional(), cookie: z.string().optional(), browserState: z.string().optional(), headers: z.record(z.string(), z.string()).optional(), login: z.strictObject({ path: z.string(), method: z.string().optional(), body: z.any().optional() }).optional() });
 const actionSchema = z.strictObject({ type: z.enum(['navigate', 'click', 'fill', 'fillSecret', 'press', 'handoff']), ref: z.string().optional(), url: z.string().optional(), value: z.string().optional(), secretRef: z.string().optional() });
 
 export async function createServer(options: { workspace?: string; port?: number; dev?: boolean; demo?: boolean; mode?: 'vulnerable' | 'secure'; memory?: boolean; writeRuntime?: boolean; vault?: SecretVault; providerFetch?: typeof fetch;desktop?:boolean;dataRoot?:string;computer?:{tools():AgentTool[];execute(name:string,input:unknown,signal:AbortSignal):Promise<AgentToolOutput>;image(id:string):Promise<Buffer>} } = {}) {
@@ -87,10 +87,11 @@ export async function createServer(options: { workspace?: string; port?: number;
     running.add(key);
     try { return await fn(); } finally { running.delete(key); }
   };
-  app.post('/api/quickproof', request => service.quickproof.start(z.strictObject({ origin: z.string().min(1) }).parse(request.body).origin));
+  app.post('/api/quickproof', request => { const body = z.strictObject({ origin: z.string().min(1), kind: z.enum(['authorization', 'role', 'cors_read']).default('authorization') }).parse(request.body); return service.quickproof.start(body.origin, body.kind); });
   app.get<{ Params: { id: string } }>('/api/quickproof/:id', request => service.quickproof.status(request.params.id));
-  app.post<{ Params: { id: string } }>('/api/quickproof/:id/connect', request => service.quickproof.connect(request.params.id, qpConnectSchema.parse(request.body)));
-  app.post<{ Params: { id: string } }>('/api/quickproof/:id/browser', request => service.quickproof.openBrowser(request.params.id, z.strictObject({ actor: z.enum(['owner', 'researcher']) }).parse(request.body).actor));
+  app.post<{ Params: { id: string } }>('/api/quickproof/:id/cancel', request => service.quickproof.cancel(request.params.id));
+  app.post<{ Params: { id: string } }>('/api/quickproof/:id/connect', (request, reply) => exclusive(`qp:${request.params.id}`, reply, () => service.quickproof.connect(request.params.id, qpConnectSchema.parse(request.body))));
+  app.post<{ Params: { id: string } }>('/api/quickproof/:id/browser', (request, reply) => exclusive(`qp:${request.params.id}`, reply, () => service.quickproof.openBrowser(request.params.id, z.strictObject({ actor: z.enum(['owner', 'researcher']) }).parse(request.body).actor)));
   app.post<{ Params: { id: string } }>('/api/quickproof/:id/identity', (request, reply) => exclusive(`qp:${request.params.id}`, reply, () => service.quickproof.detectIdentity(request.params.id, qpIdentitySchema.parse(request.body ?? {}))));
   app.post<{ Params: { id: string } }>('/api/quickproof/:id/observe', (request, reply) => exclusive(`qp:${request.params.id}`, reply, () => service.quickproof.observe(request.params.id, qpObserveSchema.parse(request.body))));
   app.post<{ Params: { id: string } }>('/api/cases/:id/verify-on-site', (request, reply) => exclusive(`case:${request.params.id}`, reply, () => service.verifyOnSite(request.params.id, verifySiteSchema.parse(request.body))));

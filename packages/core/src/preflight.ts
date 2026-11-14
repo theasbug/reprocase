@@ -35,8 +35,9 @@ export function planRun(input: CaseSpec, config: RunConfig, bindings: PlanBindin
   let afterFirstProbe = false, rechecks = 0;
   for (const step of spec.steps) { if (step.phase === 'probe') { rechecks++; afterFirstProbe = true; } else if (afterFirstProbe && step.phase === 'verify') rechecks++; }
   const stepRequests = spec.steps.reduce((sum, s) => sum + (s.concurrency?.count ?? 1), 0);
-  const identityChecks = spec.actors.length * (1 + rechecks), maximumPlannedRequests = identityChecks + stepRequests, requestBudget = options.maxRequests ?? 100;
+  const identityChecks = spec.actors.length * (spec.sessionProof ? 2 : 1 + rechecks), maximumPlannedRequests = spec.sessionProof ? identityChecks + (spec.kind === 'cors_read' ? 7 : 4) : identityChecks + stepRequests, requestBudget = options.maxRequests ?? 100;
   if (maximumPlannedRequests > requestBudget) issues.push({ path: 'maxRequests', message: `The full plan needs up to ${maximumPlannedRequests} requests, above the selected budget of ${requestBudget}`, level: 'error' });
-  if (!spec.steps.some(s => s.phase === 'cleanup')) issues.push({ path: 'steps', message: 'No cleanup step is configured; created test resources may remain', level: 'warning' });
+  if (!spec.sessionProof && !spec.steps.some(s => s.phase === 'cleanup')) issues.push({ path: 'steps', message: 'No cleanup step is configured; created test resources may remain', level: 'warning' });
+  if (spec.kind === 'cors_read' && accounts.some(a => a.mode !== 'browser')) issues.push({ path: 'actors', message: 'CORS requires a signed-in browser session', level: 'error' });
   return { caseId: spec.id, revision: spec.revision, ready: !issues.some(i => i.level === 'error'), targets, issues, accounts, steps, totals: { steps: steps.length, reads: steps.filter(s => s.effect === 'read').length, writes: steps.filter(s => s.effect === 'write').length, identityChecks, maximumPlannedRequests, requestBudget }, notes: ['This is an inspection of the plan; no target traffic was sent.', 'Previously verified sessions can change. Live identity and ownership checks still run during execution.', 'The request count is an upper estimate for the declared workflow, including identity rechecks and cleanup. A failed prerequisite can stop the run earlier.'] };
 }

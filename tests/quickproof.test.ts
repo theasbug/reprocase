@@ -46,6 +46,8 @@ describe('Quick Proof inference', () => {
     expect(guess.tenantPointer).toBe('/org/slug');
     expect(guess.sameTenant).toBe(false);
     expect(inferIdentity('/x', a, a)).toBeUndefined();
+    expect(inferIdentity('/x', { id: 'same-user', role: 'admin' }, { id: 'same-user', role: 'member' })).toBeUndefined();
+    expect(inferIdentity('/x', { org: { id: 'org-a' }, user: { id: 'user-a' } }, { org: { id: 'org-b' }, user: { id: 'user-b' } })?.idPointer).toBe('/user/id');
     expect(inferIdentity('/x', 'html', b)).toBeUndefined();
   });
 

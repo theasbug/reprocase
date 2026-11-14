@@ -28,11 +28,14 @@ export class ScanNetwork {
   readonly signal?: AbortSignal;
   private limiter: RequestLimiter;
   private count = 0;
+  private reserved = 0;
+  reserveRequests(count: number) { this.reserved += count; }
+  authorizeCleanup(input: string, signal?: AbortSignal) { return this.authorize(input, signal, false, true); }
   constructor(private fetcher: typeof fetch, private options: ScanOptions = {}) {
     this.signal = options.signal;
     this.limiter = options.limiter ?? new RequestLimiter();
   }
-  async authorize(input: string, requestSignal?: AbortSignal | null, discoveryLookup = false) {
+  async authorize(input: string, requestSignal?: AbortSignal | null, discoveryLookup = false, cleanup = false) {
     this.signal?.throwIfAborted();
     const url = new URL(input);
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Use an HTTP(S) URL without credentials');
@@ -44,7 +47,8 @@ export class ScanNetwork {
     const signal = AbortSignal.any([this.signal, requestSignal].filter((s): s is AbortSignal => !!s));
     await this.limiter.wait(this.options.program?.maxRps ?? 10, signal);
     signal.throwIfAborted();
-    if (++this.count > (this.options.maxRequests ?? 100)) throw new Error('Scan request budget exhausted');
+    if (cleanup && this.reserved > 0) this.reserved--;
+    if (++this.count + this.reserved > (this.options.maxRequests ?? 100)) throw new Error('Scan request budget exhausted (including cleanup reserve)');
     return signal;
   }
   async request(input: string, init: RequestInit = {}, discoveryLookup = false) {

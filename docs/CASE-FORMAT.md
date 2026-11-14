@@ -1,4 +1,10 @@
-# Case format v1
+# Case formats v1 and v2
+
+V1 remains valid and keeps its original fresh-resource rules. V2 adds `kind: authorization | function_read | cors_read` and matching package version 2. Authorization retains the request/step/resource model and adds `boundary: object | role`; controlled writes carry a separate fresh owner-control witness and can declare an exact scalar `expected` value. Function/CORS reads use `sessionProof: {request, fieldPointer}` and dedicated live/anonymous/browser controls without pretending a resource was created. Browser state never belongs in a case. Local recovery addresses are omitted from shared evidence.
+
+See [new proof workflows](QUICK-PROOF-V2.en.md) for the supported inputs and limitations.
+
+## V1
 
 A `.reprocase.json` package contains `format: "reprocase"`, `schemaVersion: 1`, an export timestamp, a `CaseSpec`, optional historical evidence, and redaction notes. It is JSON data. Import does not execute code, open a target, or start a run. Unknown executable fields are rejected by strict schemas.
 

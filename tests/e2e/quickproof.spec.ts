@@ -65,6 +65,7 @@ test('Triager: import a reporter’s package and verify it on my own site withou
     await qp.connect(id, { actor: 'researcher', header: { name: 'X-Auth-Token', value: lab.users.bob.token } });
     await qp.detectIdentity(id, {});
     const observed = await qp.observe(id, { create: 'POST /api/v1/notes\n\n{"text":"x"}', vulnerable: 'GET /api/v1/notes/7a1f3c2e-1b2c-4d5e-8f90-112233445566' });
+    if (observed.status !== 'ready') throw new Error('Expected a complete read draft');
     const foreign = { ...observed.case, id: 'reported-note-idor', revision: 1, policy: { ...observed.case.policy, acknowledged: true }, actors: observed.case.actors.map(a => ({ ...a, identity: { ...a.identity, path: '/me', idPointer: '/id', tenantPointer: '/tenant' } })) };
     const pack = JSON.stringify({ format: 'reprocase', schemaVersion: 1, exportedAt: new Date().toISOString(), case: foreign, redactions: [] });
 

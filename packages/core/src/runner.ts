@@ -4,26 +4,30 @@ import { runConfigSchema, type CaseSpec, type RunConfig, type RunResult, type Se
 import { check, consumedRequestRefs, equal, jsonPointer, lookup, resolveRequest, targetOrigin } from './values.ts';
 import { validateCase } from './validate.ts';
 import { createRedactor } from './redact.ts';
+import { executeSessionCase } from './session-runner.ts';
 
 export function newRunResult(spec: CaseSpec, id: string = randomUUID()): RunResult {
-  return { schemaVersion: 1, id, caseId: spec.id, caseRevision: spec.revision, state: 'running', verdict: 'inconclusive', reason: 'Checking preparation and identity', code: 'running', startedAt: new Date().toISOString(), steps: [], checks: [], identities: {}, requests: 0, cleanupErrors: [], setup: 'created_this_run' };
+  return { schemaVersion: spec.schemaVersion, id, caseId: spec.id, caseRevision: spec.revision, state: 'running', verdict: 'inconclusive', reason: 'Checking preparation and identity', code: 'running', startedAt: new Date().toISOString(), steps: [], checks: [], identities: {}, requests: 0, cleanupErrors: [], setup: spec.sessionProof ? 'verified_session' : 'created_this_run' };
 }
 /** Raw response text for marker witnesses that do not depend on a field location. Bounded. */
 const TEXT_LIMIT = 1024 * 1024;
 export const responseText = (body: Json): string => (typeof body === 'string' ? body : JSON.stringify(body ?? null)).slice(0, TEXT_LIMIT);
 class RunFailure extends Error { constructor(public code: string, message: string) { super(message); } }
 export async function executeCase(spec: CaseSpec, config: RunConfig, transport: SessionTransport, options: { signal?: AbortSignal; onEvent?: (event: RunEvent) => void; runId?: string } = {}): Promise<RunResult> {
+  if (spec.sessionProof) return executeSessionCase(spec, config, transport, options);
   const run = newRunResult(spec, options.runId);
   const marker = `rc_${randomUUID()}`;
   const values: Record<string, any> = { run: { id: run.id, marker }, actors: {}, captures: {}, steps: {} };
   const redact = createRedactor(transport.knownSecrets());
   redact.alias(marker, 'run.marker');
-  const emit = (type: RunEvent['type']) => { redact.add(...transport.knownSecrets()); options.onEvent?.({ type, run: redact.json(structuredClone(run)) }); };
+  const localSnapshot = () => { const snapshot = redact.json(structuredClone(run)); if (run.localCleanupTargets) snapshot.localCleanupTargets = createRedactor(transport.knownSecrets()).json(run.localCleanupTargets); return snapshot; };
+  const emit = (type: RunEvent['type']) => { redact.add(...transport.knownSecrets()); options.onEvent?.({ type, run: localSnapshot() }); };
   const created = new Set<string>();
   const checkCancellation = () => { if (options.signal?.aborted) throw new RunFailure('cancelled', 'Run cancelled; in-flight writes may have an unknown outcome'); };
   const send = async (actor: string, request: ReturnType<typeof resolveRequest>) => {
     checkCancellation();
-    if (run.requests >= (config.maxRequests ?? 100)) throw new RunFailure('request_budget', 'The configured request budget was exhausted');
+    const reserved = spec.schemaVersion === 2 && !cleaning ? spec.steps.filter(s => s.phase === 'cleanup').length : 0;
+    if (run.requests + reserved >= (config.maxRequests ?? 100)) throw new RunFailure('request_budget', 'The configured request budget (including cleanup reserve) was exhausted');
     if (run.requests && (config.intervalMs ?? 250) > 0) await pause(config.intervalMs ?? 250, undefined, { signal: options.signal });
     checkCancellation();
     run.requests++;
@@ -31,6 +35,7 @@ export async function executeCase(spec: CaseSpec, config: RunConfig, transport: 
     checkCancellation();
     return response;
   };
+  let cleaning = false;
   const identity = async (actor: CaseSpec['actors'][number], recheck: boolean) => {
     const row: StepResult = { id: `${recheck ? 'recheck' : 'identity'}-${actor.id}-${run.requests}`, label: `${recheck ? 'Recheck' : 'Verify'} ${actor.label}`, phase: 'identity', actor: actor.id, status: 'running', startedAt: new Date().toISOString(), checks: [] };
     run.steps.push(row); emit('step');
@@ -110,7 +115,7 @@ export async function executeCase(spec: CaseSpec, config: RunConfig, transport: 
       row.checks = item.checks.map(c => check(c, values));
       if (row.checks.some(c => !c.passed)) throw new RunFailure('step_precondition_failed', `A required observation failed in ${item.label}`);
       // Preparation cannot silently proceed after a failed create, even if its body looks plausible.
-      if (item.phase === 'prepare' && (response.status < 200 || response.status >= 300)) throw new RunFailure('preparation_failed', `${item.label} did not complete successfully`);
+      if (item.phase === 'prepare' && (response.status < 200 || response.status >= 300) && !(spec.schemaVersion === 2 && spec.witness.writeProof?.control?.mutation === item.id)) throw new RunFailure('preparation_failed', `${item.label} did not complete successfully`);
       row.status = 'passed';
     } catch (error) { row.status = 'failed'; row.error = error instanceof Error ? error.message : 'Request failed'; throw error; }
     finally { row.finishedAt = new Date().toISOString(); emit('step'); }
@@ -132,10 +137,19 @@ export async function executeCase(spec: CaseSpec, config: RunConfig, transport: 
         for (const actor of spec.actors) await identity(actor, true);
         if (!preparationChecked) { resourceChecks(); preparationChecked = true; }
       }
-      await step(item);
+      try { await step(item); } catch (e) {
+        // A lost mutation response does not justify retrying it. Observe the owner state once.
+        if (spec.schemaVersion !== 2 || ![spec.witness.writeProof?.probe, spec.witness.writeProof?.control?.mutation].includes(item.id) || options.signal?.aborted || !(e instanceof Error) || /scope|budget|cancel|restriction/i.test(e.message)) throw e;
+      }
+      const proof = spec.witness.writeProof, expected = proof?.expected ?? marker;
+      if (proof?.control?.before === item.id) {
+        const value = jsonPointer(values.steps[item.id]?.body, proof.control.fieldPointer);
+        if (value === undefined || equal(value, expected)) throw new RunFailure('positive_control_failed', 'The control baseline must differ from the intended new value');
+      }
+      if (proof?.control?.step === item.id && !equal(jsonPointer(values.steps[item.id]?.body, proof.control.fieldPointer), expected)) throw new RunFailure('positive_control_failed', 'The authorized control did not produce the expected state');
       if (spec.witness.writeProof?.before === item.id) {
         const beforeValue = jsonPointer(values.steps[item.id]?.body, spec.witness.writeProof.fieldPointer);
-        if (beforeValue === undefined || equal(beforeValue, marker)) throw new RunFailure('write_precondition_failed', 'The owner baseline must expose a field that does not already contain this run’s write marker');
+        if (beforeValue === undefined || equal(beforeValue, expected)) throw new RunFailure('write_precondition_failed', 'The owner baseline must expose a field different from the expected new value');
       }
     }
     const success = spec.witness.success.map(c => check(c, values));
@@ -144,7 +158,9 @@ export async function executeCase(spec: CaseSpec, config: RunConfig, transport: 
       const proof = spec.witness.writeProof;
       const before = jsonPointer(values.steps[proof.before]?.body, proof.fieldPointer), after = jsonPointer(values.steps[proof.after]?.body, proof.fieldPointer);
       const probe = values.steps[proof.probe];
-      success.push({ id: 'write-transition', label: 'A different actor changed the owner-observed field to this run’s fresh marker', passed: before !== undefined && !equal(before, marker) && equal(after, marker) && probe?.status >= 200 && probe?.status < 300 });
+      const expected = proof.expected ?? marker;
+      success.push({ id: 'write-transition', label: 'A different actor changed the independently observed owner state', passed: before !== undefined && !equal(before, expected) && equal(after, expected) && (spec.schemaVersion === 2 || (probe?.status >= 200 && probe?.status < 300)) });
+      if (spec.schemaVersion === 2) rejection.push({ id: 'owner-unchanged', label: 'The owner state remained unchanged', passed: before !== undefined && equal(before, after) });
     }
     run.checks.push(...success.map(c => ({ ...c, id: `witness-${c.id}` })));
     if (success.every(c => c.passed)) { run.verdict = 'reproduced'; run.code = 'witness_observed'; run.reason = 'The declared access boundary was crossed with this run’s fresh resource and verified accounts'; }
@@ -155,15 +171,20 @@ export async function executeCase(spec: CaseSpec, config: RunConfig, transport: 
     run.code = options.signal?.aborted ? 'cancelled' : error instanceof RunFailure ? error.code : 'request_failed';
     run.reason = options.signal?.aborted ? 'Run cancelled; an in-flight write may have an unknown outcome' : error instanceof Error ? error.message : 'The run could not be completed';
   } finally {
+    cleaning = true;
+    const remaining = new Set<string>();
+    const address = (item: StepSpec) => { try { remaining.add(resolveRequest(item.request, config.targets, values).url); } catch { /* Missing binding is already recorded. */ } };
     if (!options.signal?.aborted) for (const item of spec.steps.filter(s => s.phase === 'cleanup')) {
       const resource = spec.resources.find(r => created.has(r.id) && r.ownerActor === item.request.actor && consumedRequestRefs(item.request).includes(r.idRef));
       if (!resource) continue;
-      try { await step(item); const response = values.steps[item.id]; if (response?.status < 200 || response?.status >= 300) run.cleanupErrors.push(`${item.label}: server did not confirm cleanup`); }
-      catch (error) { run.cleanupErrors.push(`${item.label}: ${error instanceof Error ? error.message : 'Cleanup failed'}`); }
+      try { await step(item); const response = values.steps[item.id]; if (response?.status < 200 || response?.status >= 300) { run.cleanupErrors.push(`${item.label}: server did not confirm cleanup`); address(item); } }
+      catch (error) { run.cleanupErrors.push(`${item.label}: ${error instanceof Error ? error.message : 'Cleanup failed'}`); address(item); }
     }
     if (options.signal?.aborted && created.size) run.cleanupErrors.push('Cleanup was not sent after cancellation. Review resources created before cancellation.');
+    if (options.signal?.aborted) for (const item of spec.steps.filter(s => s.phase === 'cleanup' && spec.resources.some(r => created.has(r.id) && consumedRequestRefs(s.request).includes(r.idRef)))) address(item);
+    if (remaining.size) run.localCleanupTargets = [...remaining];
     run.state = options.signal?.aborted ? 'cancelled' : 'completed';
     run.finishedAt = new Date().toISOString(); emit('finished');
   }
-  return redact.json(run);
+  return localSnapshot();
 }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0-beta.1
+
+- Quick proof controlled writes: five-input learning, a separate authorized control, fresh resource binding in paths/queries/bodies, JSON/form encoding, and independent owner before/after evidence.
+- Role/function read and write proofs with live roles and anonymous controls.
+- Browser CORS private-read proofs from foreign and null origins, preserving real cookie and browser security rules.
+- Strict v2 proof/package variants, backward-compatible v1 cases, shared UI/CLI/MCP execution, reports and Playwright exports.
+- Scope/budget/cancellation coverage for browser traffic and reserved cleanup. See docs/QUICK-PROOF-V2.en.md and docs/QUICK-PROOF-V2.tr.md.
+
 ## 1.1.0-beta.7
 
 Fixes from an external code review:

@@ -3,6 +3,7 @@ import { createServer, type Server } from 'node:http';
 import { BrowserManager } from '../packages/browser/src/index.ts';
 import { AIManager } from '../packages/ai/src/index.ts';
 import { createExampleCase } from '../packages/core/src/example.ts';
+import { VERSION } from '../packages/core/src/version.ts';
 
 const cleanups: (() => Promise<void>)[] = [];
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup(); });
@@ -157,7 +158,7 @@ describe('optional AI adapters', () => {
     expect(headers).toHaveLength(2);
     expect(headers[0].get('x-opencode-session')).toMatch(/^[0-9a-f-]{36}$/);
     expect(headers[1].get('x-opencode-session')).toBe(headers[0].get('x-opencode-session'));
-    expect(headers.every(h => h.get('user-agent') === 'reprocase/1.1.0-beta.7')).toBe(true);
+    expect(headers.every(h => h.get('user-agent') === `reprocase/${VERSION}`)).toBe(true);
     expect(ai.publicSettings()).not.toHaveProperty('apiKey');
   });
   it('tests required tool support, creates a new conversation per test, and keeps the existing key only for the same endpoint', async () => {

@@ -1,0 +1,79 @@
+{
+  "format": "reprocase",
+  "schemaVersion": 2,
+  "exportedAt": "2026-11-14T20:50:25.830Z",
+  "case": {
+    "schemaVersion": 2,
+    "id": "quick-cors-read-v2",
+    "revision": 1,
+    "title": "CORS private read: /private",
+    "description": "",
+    "policy": {
+      "statement": "An untrusted origin must not read this account-only response.",
+      "acknowledged": false
+    },
+    "actors": [
+      {
+        "id": "owner",
+        "label": "Authorized account",
+        "color": "#43d9bc",
+        "identity": {
+          "origin": "api",
+          "path": "/me",
+          "idPointer": "/id",
+          "tenantPointer": "/tenant"
+        }
+      }
+    ],
+    "origins": [
+      {
+        "id": "api",
+        "label": "Application API"
+      }
+    ],
+    "preconditions": [],
+    "resources": [],
+    "steps": [
+      {
+        "id": "private-read",
+        "label": "Verify private response access",
+        "phase": "probe",
+        "effect": "read",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "GET",
+          "path": "/private",
+          "pathParams": {},
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": []
+      }
+    ],
+    "witness": {
+      "success": [],
+      "rejection": []
+    },
+    "kind": "cors_read",
+    "boundary": "object",
+    "sessionProof": {
+      "request": {
+        "actor": "owner",
+        "origin": "api",
+        "method": "GET",
+        "path": "/private",
+        "pathParams": {},
+        "query": {},
+        "headers": {}
+      },
+      "fieldPointer": "/privateNote"
+    }
+  },
+  "redactions": [
+    "Account credentials are not included.",
+    "Observed actor, resource, and run-marker bindings are replaced by symbolic aliases where available.",
+    "Review the export for application-specific personal information before sharing."
+  ]
+}

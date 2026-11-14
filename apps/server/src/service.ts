@@ -316,7 +316,7 @@ export class ReproService {
   }
   async probeTarget(originUrl:string,signal?:AbortSignal):Promise<ReconReport>{return this.scan(signal,s=>probeOrigin(originUrl,fetch,this.knownSecrets(),this.scanOptions(undefined,s)));}
   private async scan<T>(signal:AbortSignal|undefined,fn:(signal:AbortSignal)=>Promise<T>){const ctrl=new AbortController();this.scanControllers.add(ctrl);try{return await fn(signal?AbortSignal.any([signal,ctrl.signal]):ctrl.signal);}finally{this.scanControllers.delete(ctrl);}}
-  cancelScans(){for(const c of this.scanControllers)c.abort();return {cancelled:true};}
+  cancelScans(){for(const c of this.scanControllers)c.abort();this.quickproof.cancelAll();return {cancelled:true};}
   extractRecon(sourceText: string, sourceLabel = 'manual'): ReconEndpoint[] {
     return extractEndpointsFromText(sourceText, sourceLabel);
   }
@@ -471,7 +471,7 @@ export class ReproService {
     const origin = this.browsers.status(key)?.origin;
     if (!origin) throw new Error('Connect this account before using it.');
     await network.authorize(new URL(identity.path, origin).toString());
-    return this.browsers.verify(key, identity);
+    return this.browsers.verify(key, identity, network.signal);
   }
   async connectDirect(caseId: string, actorId: string, input: DirectConnection) {
     this.idle(caseId);
@@ -592,6 +592,8 @@ export class ReproService {
       { ...config, targets },
       {
         request: async(actorId,request,signal)=>{await network.authorize(request.url,signal);return this.browsers.request(this.key(caseId,actorId),request,signal);},
+        anonymous: async(request,signal)=>{await network.authorize(request.url,signal);return this.browsers.anonymous(request,signal);},
+        browserFetch: (actorId,request,origin,signal)=>this.browsers.browserFetch(this.key(caseId,actorId),request,origin,url=>network.authorize(url,signal),signal),
         knownSecrets: () => this.browsers.knownSecrets(),
       },
       {
@@ -665,7 +667,7 @@ export class ReproService {
     if (format === 'html') return renderHTML(pack);
     if (format === 'bounty') return renderBountyReport(pack);
     if (format === 'hurl') return renderHurl(pack.case, savedTargets);
-    if (format === 'playwright') return renderPlaywright(pack.case, savedTargets);
+    if (format === 'playwright') { const program = this.getProgramForScan(); return renderPlaywright(pack.case, savedTargets, program ? { inScope: program.inScope, outOfScope: program.outOfScope, maxRps: program.maxRps } : undefined); }
     return renderMarkdown(pack);
   }
   async startDemo(mode: 'vulnerable' | 'secure' = 'vulnerable') {
@@ -708,6 +710,7 @@ export class ReproService {
   }
   async close() {
     this.cancelScans();
+    await this.quickproof.close();
     this.controllers.forEach(c => c.abort());
     await Promise.allSettled([...this.tasks.values()]);
     await this.chats.close();
