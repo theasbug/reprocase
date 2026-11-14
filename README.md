@@ -44,6 +44,23 @@ Every run ends in exactly one verdict: **`reproduced`**, **`not_reproduced`**, o
 - **Triagers and program owners.** Rerun a report with your own test accounts in seconds.
 - **AppSec teams.** Keep the case as a regression check and rerun it after the fix.
 
+## Prove your own finding in four steps
+
+**Quick proof** learns how your target works by watching it, so you never write JSON Pointers:
+
+1. **Accounts:** paste the target origin and a session for two test accounts you control. A header, Bearer token or cookie copied from DevTools all work.
+2. **Identity:** ReproCase calls common "who am I" endpoints (`/me`, `/api/v1/profile`, …) with both accounts and finds the account ID and organization fields by comparing the answers. If a guess is wrong, click the right field.
+3. **Requests:** paste the request that creates the object and the vulnerable request that reads it by ID, straight from Burp or DevTools. Headers are ignored, so captured cookies are never stored.
+4. **Result:** ReproCase creates one object as account A, finds the new ID, the owner field and a text field for the marker, detects CSRF if the creation is rejected, previews account B's access, deletes the object and saves the case. You review the policy, approve and run.
+
+<p align="center"><img src="docs/images/quick-proof-identity.png" alt="Quick proof found the identity endpoint and fields by comparing two accounts" width="49%"> <img src="docs/images/quick-proof-result.png" alt="Quick proof result: what was learned about the target and a preview" width="49%"></p>
+
+The verdict still comes from the normal run: a fresh object, a unique marker, verified accounts and the three outcomes. Quick proof currently covers read IDORs with the object ID in the URL path; use **Advanced case** for write IDORs.
+
+### Triagers: verify a report on your own site
+
+Import the reporter's `.reprocase.json`. The **Verify on my site** dialog asks for your API origin and one credential per test account. If your identity endpoint or fields differ from the reporter's, ReproCase finds them and saves a new case revision, so there's no JSON to edit. The reporter's policy acknowledgement is reset: you read the claim and approve it yourself.
+
 ## Try it in two minutes
 
 ### Windows portable
