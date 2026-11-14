@@ -55,7 +55,7 @@ Every run ends in exactly one verdict: **`reproduced`**, **`not_reproduced`**, o
 
 <p align="center"><img src="docs/images/quick-proof-identity.png" alt="Quick proof found the identity endpoint and fields by comparing two accounts" width="49%"> <img src="docs/images/quick-proof-result.png" alt="Quick proof result: what was learned about the target and a preview" width="49%"></p>
 
-The verdict still comes from the normal run: a fresh object, a unique marker, verified accounts and the three outcomes. Quick proof currently covers read IDORs with the object ID in the URL path; use **Advanced case** for write IDORs.
+The verdict still comes from the normal run: a fresh object, a unique marker, verified accounts and the three outcomes. Quick proof also supports controlled write IDORs (PATCH/PUT/POST), role/function authorization and real-browser CORS private reads. The normal write flow still needs five inputs. See the [new proof workflows](docs/QUICK-PROOF-V2.en.md) ([Türkçe](docs/QUICK-PROOF-V2.tr.md)).
 
 ### Triagers: verify a report on your own site
 

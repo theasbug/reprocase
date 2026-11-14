@@ -6,6 +6,7 @@ export * from './runner.ts';
 export * from './import.ts';
 export * from './candidates.ts';
 export * from './quickproof.ts';
+export * from './proofs.ts';
 export * from './export.ts';
 export * from './example.ts';
 export * from './version.ts';

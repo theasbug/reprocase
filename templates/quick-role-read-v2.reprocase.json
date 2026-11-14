@@ -1,0 +1,128 @@
+{
+  "format": "reprocase",
+  "schemaVersion": 2,
+  "exportedAt": "2026-11-14T20:50:25.829Z",
+  "case": {
+    "schemaVersion": 2,
+    "id": "quick-role-read-v2",
+    "revision": 1,
+    "title": "Role-restricted read: /admin/report",
+    "description": "",
+    "policy": {
+      "statement": "Account A may perform this operation; account B must be denied.",
+      "acknowledged": false
+    },
+    "actors": [
+      {
+        "id": "owner",
+        "label": "Authorized account",
+        "color": "#43d9bc",
+        "expectedRole": "admin",
+        "identity": {
+          "origin": "api",
+          "path": "/me",
+          "idPointer": "/id",
+          "tenantPointer": "/tenant",
+          "rolePointer": "/role"
+        }
+      },
+      {
+        "id": "researcher",
+        "label": "Lower-privileged account",
+        "color": "#a99bff",
+        "expectedRole": "member",
+        "identity": {
+          "origin": "api",
+          "path": "/me",
+          "idPointer": "/id",
+          "tenantPointer": "/tenant",
+          "rolePointer": "/role"
+        }
+      }
+    ],
+    "origins": [
+      {
+        "id": "api",
+        "label": "Application API"
+      }
+    ],
+    "preconditions": [
+      {
+        "id": "different-accounts",
+        "label": "The accounts are different",
+        "op": "neq",
+        "left": {
+          "$ref": "actors.owner.id"
+        },
+        "right": {
+          "$ref": "actors.researcher.id"
+        }
+      },
+      {
+        "id": "different-roles",
+        "label": "The observed roles are different",
+        "op": "neq",
+        "left": {
+          "$ref": "actors.owner.role"
+        },
+        "right": {
+          "$ref": "actors.researcher.role"
+        }
+      },
+      {
+        "id": "same-tenant",
+        "label": "The live accounts belong to the same organization",
+        "op": "eq",
+        "left": {
+          "$ref": "actors.owner.tenant"
+        },
+        "right": {
+          "$ref": "actors.researcher.tenant"
+        }
+      }
+    ],
+    "resources": [],
+    "steps": [
+      {
+        "id": "private-read",
+        "label": "Verify private response access",
+        "phase": "probe",
+        "effect": "read",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "GET",
+          "path": "/admin/report",
+          "pathParams": {},
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": []
+      }
+    ],
+    "witness": {
+      "success": [],
+      "rejection": []
+    },
+    "kind": "function_read",
+    "boundary": "role",
+    "sessionProof": {
+      "request": {
+        "actor": "owner",
+        "origin": "api",
+        "method": "GET",
+        "path": "/admin/report",
+        "pathParams": {},
+        "query": {},
+        "headers": {}
+      },
+      "fieldPointer": "/confidential"
+    }
+  },
+  "redactions": [
+    "Account credentials are not included.",
+    "Observed actor, resource, and run-marker bindings are replaced by symbolic aliases where available.",
+    "Review the export for application-specific personal information before sharing."
+  ]
+}

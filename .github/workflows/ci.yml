@@ -53,7 +53,7 @@ jobs:
         shell: pwsh
         run: |
           $env:REPROCASE_DESKTOP_EXE = Join-Path $env:REPROCASE_PACKAGE_OUT 'ReproCase-win32-x64/ReproCase.exe'
-          npm run test:desktop -- desktop.spec.ts smoke.spec.ts
+          npm run test:desktop -- desktop.spec.ts smoke.spec.ts expanded.spec.ts
       - uses: actions/upload-artifact@v7
         with:
           name: windows-beta
@@ -91,9 +91,9 @@ jobs:
         run: |
           base="$REPROCASE_PACKAGE_OUT/ReproCase-${{ matrix.platform }}-${{ matrix.arch }}"
           if [ "${{ matrix.platform }}" = darwin ]; then
-            REPROCASE_DESKTOP_EXE="$base/ReproCase.app/Contents/MacOS/ReproCase" npm run test:desktop -- smoke.spec.ts
+            REPROCASE_DESKTOP_EXE="$base/ReproCase.app/Contents/MacOS/ReproCase" npm run test:desktop -- smoke.spec.ts expanded.spec.ts
           else
-            REPROCASE_DESKTOP_EXE="$base/ReproCase" xvfb-run -a npm run test:desktop -- smoke.spec.ts
+            REPROCASE_DESKTOP_EXE="$base/ReproCase" xvfb-run -a npm run test:desktop -- smoke.spec.ts expanded.spec.ts
           fi
   docker:
     runs-on: ubuntu-latest

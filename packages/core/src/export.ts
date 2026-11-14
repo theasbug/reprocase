@@ -1,5 +1,6 @@
 import { caseSchema, packageSchema, type CaseSpec, type Json, type ReproPackage, type RunResult } from './schema.ts';
 import { createRedactor } from './redact.ts';
+import type { BountyProgram } from './bounty.ts';
 
 const reference = (value: unknown): value is { $ref: string } => !!value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 1 && typeof (value as Record<string, unknown>).$ref === 'string';
 function pointer(value: unknown, path: string): unknown {
@@ -27,6 +28,10 @@ export function exportPackage(spec: CaseSpec, run?: RunResult, secrets: string[]
     for (const [key, item] of Object.entries(template)) aliasTemplate(item, (actual as Record<string, unknown>)[key]);
   };
   if (run) {
+    if (parsed.sessionProof) for (const result of run.steps.filter(s => s.id.startsWith('authorized-'))) {
+      const value = pointer(result.response?.body, parsed.sessionProof.fieldPointer);
+      if (typeof value === 'string' || typeof value === 'number') redactor.alias(value, 'proof.privateField');
+    }
     for (const [actor, identity] of Object.entries(run.identities)) {
       redactor.alias(identity.id, `actors.${actor}.id`);
       if (identity.tenant !== undefined) redactor.alias(identity.tenant, `actors.${actor}.tenant`);
@@ -46,9 +51,10 @@ export function exportPackage(spec: CaseSpec, run?: RunResult, secrets: string[]
   const evidence = run ? JSON.parse(JSON.stringify(redactor.json({
     observation: 'Historical local observation; importing this evidence does not perform a live verification.',
     ...run,
+    localCleanupTargets: undefined,
   }))) as Json : undefined;
   return packageSchema.parse({
-    format: 'reprocase', schemaVersion: 1, exportedAt: new Date().toISOString(), case: safeSpec,
+    format: 'reprocase', schemaVersion: safeSpec.schemaVersion, exportedAt: new Date().toISOString(), case: safeSpec,
     ...(evidence === undefined ? {} : { evidence }),
     redactions: ['Account credentials are not included.', 'Observed actor, resource, and run-marker bindings are replaced by symbolic aliases where available.', 'Review the export for application-specific personal information before sharing.'],
   });
@@ -113,7 +119,7 @@ export function renderHTML(input: ReproPackage): string {
   const evidence = asRecord(pack.evidence);
   const steps = Array.isArray(evidence.steps) ? evidence.steps : [];
   const checks = Array.isArray(evidence.checks) ? evidence.checks : [];
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>${html(pack.case.title)} — ReproCase</title><style>body{font:15px/1.65 system-ui,sans-serif;background:#f5f7fa;color:#172432;max-width:1000px;margin:auto;padding:36px}header,section{background:white;border:1px solid #dce3eb;border-radius:12px;padding:24px;margin-bottom:16px}h1{font-size:30px;line-height:1.2;margin:12px 0}h2{font-size:19px}h3{font-size:15px}small,.muted{color:#526477}.brand{font-weight:800;letter-spacing:.12em;color:#15756d}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f2f5f8;border-radius:8px;padding:16px;font-size:12px}.notice{border-left:4px solid #cc9a2a;background:#fff8e6;padding:14px}.verdict{font-size:22px;font-weight:700}li{margin:8px 0}@media print{body{padding:0;background:white}header,section{break-inside:avoid;border:0}pre{font-size:10px}}</style></head><body><header><div class="brand">REPROCASE / EVIDENCE REPORT</div><h1>${html(pack.case.title)}</h1><p>${html(pack.case.description)}</p><p class="muted">${html(pack.case.id)} · revision ${pack.case.revision} · exported ${html(pack.exportedAt)}</p><p class="verdict">${html(humanVerdict(evidence.verdict))}</p><p>${html(evidence.reason ?? 'No live run is attached.')}</p><div class="notice">Historical observation. This report is not a new live verification. The recipient must connect their own accounts and execute the package. A non-reproduced result does not by itself prove the application is fixed.</div></header><section><h2>Declared policy and assumptions</h2><p>${html(pack.case.policy.statement)}</p><p>Researcher acknowledged: ${pack.case.policy.acknowledged ? 'yes' : 'no'}. This expectation is declared by the researcher; it is not an independent certification of intended access.</p><p>Setup provenance: ${html(evidence.setup ?? 'Not observed')}</p></section><section><h2>Observed checks</h2><ul>${checks.map(item => { const check = asRecord(item); return `<li><strong>${check.passed ? 'PASS' : 'FAIL'}</strong> ${html(check.label)}${check.detail ? ` — ${html(check.detail)}` : ''}</li>`; }).join('') || '<li>No checks attached.</li>'}</ul></section><section><h2>Account and resource relationships</h2><ul>${pack.case.actors.map(actor => `<li>${html(actor.label)} (${html(actor.id)})${actor.expectedRole ? ` — expected role ${html(actor.expectedRole)}` : ''}</li>`).join('')}${pack.case.resources.map(resource => `<li>${html(resource.label)} — created by ${html(resource.createdBy)}, owned by ${html(resource.ownerActor)}; fresh response bindings establish identity and ownership.</li>`).join('')}</ul></section><section><h2>Recorded steps</h2>${steps.map(item => { const step = asRecord(item); return `<h3>${html(step.label)} — ${html(step.status)}</h3><p class="muted">Actor ${html(step.actor)} · ${html(step.phase)}</p><pre>${html(JSON.stringify(step, null, 2))}</pre>`; }).join('') || '<p>No execution steps attached.</p>'}</section><section><h2>Reproduction</h2><p>Import the accompanying .reprocase.json file, select your authorized API origins, connect your own test accounts, review the declared boundary, and run the exact case revision.</p><h2>Redactions</h2><ul>${pack.redactions.map(item => `<li>${html(item)}</li>`).join('')}</ul></section><footer class="muted">ReproCase · portable case specification v1 · no external resources in this report</footer></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>${html(pack.case.title)} — ReproCase</title><style>body{font:15px/1.65 system-ui,sans-serif;background:#f5f7fa;color:#172432;max-width:1000px;margin:auto;padding:36px}header,section{background:white;border:1px solid #dce3eb;border-radius:12px;padding:24px;margin-bottom:16px}h1{font-size:30px;line-height:1.2;margin:12px 0}h2{font-size:19px}h3{font-size:15px}small,.muted{color:#526477}.brand{font-weight:800;letter-spacing:.12em;color:#15756d}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f2f5f8;border-radius:8px;padding:16px;font-size:12px}.notice{border-left:4px solid #cc9a2a;background:#fff8e6;padding:14px}.verdict{font-size:22px;font-weight:700}li{margin:8px 0}@media print{body{padding:0;background:white}header,section{break-inside:avoid;border:0}pre{font-size:10px}}</style></head><body><header><div class="brand">REPROCASE / EVIDENCE REPORT</div><h1>${html(pack.case.title)}</h1><p>${html(pack.case.description)}</p><p class="muted">${html(pack.case.id)} · revision ${pack.case.revision} · exported ${html(pack.exportedAt)}</p><p class="verdict">${html(humanVerdict(evidence.verdict))}</p><p>${html(evidence.reason ?? 'No live run is attached.')}</p><div class="notice">Historical observation. This report is not a new live verification. The recipient must connect their own accounts and execute the package. A non-reproduced result does not by itself prove the application is fixed.</div></header><section><h2>Declared policy and assumptions</h2><p>${html(pack.case.policy.statement)}</p><p>Researcher acknowledged: ${pack.case.policy.acknowledged ? 'yes' : 'no'}. This expectation is declared by the researcher; it is not an independent certification of intended access.</p><p>Setup provenance: ${html(evidence.setup ?? 'Not observed')}</p></section><section><h2>Observed checks</h2><ul>${checks.map(item => { const check = asRecord(item); return `<li><strong>${check.passed ? 'PASS' : 'FAIL'}</strong> ${html(check.label)}${check.detail ? ` — ${html(check.detail)}` : ''}</li>`; }).join('') || '<li>No checks attached.</li>'}</ul></section><section><h2>Account and resource relationships</h2><ul>${pack.case.actors.map(actor => `<li>${html(actor.label)} (${html(actor.id)})${actor.expectedRole ? ` — expected role ${html(actor.expectedRole)}` : ''}</li>`).join('')}${pack.case.resources.map(resource => `<li>${html(resource.label)} — created by ${html(resource.createdBy)}, owned by ${html(resource.ownerActor)}; fresh response bindings establish identity and ownership.</li>`).join('')}</ul></section><section><h2>Recorded steps</h2>${steps.map(item => { const step = asRecord(item); return `<h3>${html(step.label)} — ${html(step.status)}</h3><p class="muted">Actor ${html(step.actor)} · ${html(step.phase)}</p><pre>${html(JSON.stringify(step, null, 2))}</pre>`; }).join('') || '<p>No execution steps attached.</p>'}</section><section><h2>Reproduction</h2><p>Import the accompanying .reprocase.json file, select your authorized API origins, connect your own test accounts, review the declared boundary, and run the exact case revision.</p><h2>Redactions</h2><ul>${pack.redactions.map(item => `<li>${html(item)}</li>`).join('')}</ul></section><footer class="muted">ReproCase · portable case specification v${pack.schemaVersion} · no external resources in this report</footer></body></html>`;
 }
 
 export function renderBountyReport(input: ReproPackage): string {
@@ -124,7 +130,7 @@ export function renderBountyReport(input: ReproPackage): string {
   const identities = asRecord(evidence.identities);
   const hasWrite = Boolean(pack.case.witness.writeProof);
   const hasRace = pack.case.steps.some(s => Boolean(s.concurrency));
-  const cwe = hasRace ? 'CWE-362 (Concurrent Execution using Shared Resource / Race Condition) & CWE-284' : hasWrite ? 'CWE-639 (Authorization Bypass Through User-Controlled Key — Write/Modification)' : 'CWE-639 / CWE-284 (Improper Access Control — Cross-Account Information Disclosure)';
+  const cwe = pack.case.kind === 'cors_read' ? 'CWE-942 (Cross-Origin Private Data Exposure)' : pack.case.boundary === 'role' ? 'CWE-862 / CWE-863 (Function-Level Authorization)' : hasRace ? 'CWE-362 (Concurrent Execution using Shared Resource / Race Condition) & CWE-284' : hasWrite ? 'CWE-639 (Authorization Bypass Through User-Controlled Key — Write/Modification)' : 'CWE-639 / CWE-284 (Improper Access Control — Cross-Account Information Disclosure)';
 
   return [
     `# [Bug Bounty Report] ${mdText(pack.case.title)}`,
@@ -135,7 +141,7 @@ export function renderBountyReport(input: ReproPackage): string {
     `- **Vulnerability Class:** ${cwe}`,
     `- **Case ID & Revision:** \`${mdText(pack.case.id)}\` (r${pack.case.revision})`,
     `- **Recorded Verdict:** **${humanVerdict(evidence.verdict)}** (${mdText(evidence.reason ?? 'No live run attached')})`,
-    `- **Fresh Resource Provenance:** \`${mdText(evidence.setup ?? 'Not observed')}\``,
+    `- **Setup Provenance:** \`${mdText(evidence.setup ?? 'Not observed')}\``,
     '',
     '## Expected Access Policy',
     mdText(pack.case.policy.statement),
@@ -201,6 +207,7 @@ function hurlValue(value: unknown): unknown {
 
 export function renderHurl(input: CaseSpec, targets: Record<string, string> = {}): string {
   const spec = caseSchema.parse(input);
+  if (spec.kind === 'cors_read') throw new Error('CORS needs browser execution. Export Playwright or a ReproCase package instead.');
   const lines: string[] = [
     `# HTTP REQUEST DRAFT ONLY: this file does not verify CaseSpec identity, ownership or witnesses.`,
     `# Use the .reprocase.json runner or Playwright proof adapter for security verdicts.`,
@@ -241,11 +248,11 @@ export function renderHurl(input: CaseSpec, targets: Record<string, string> = {}
 }
 
 /** Run inside a ReproCase source checkout: the proof uses the SAME runner and session transport. */
-export function renderPlaywright(input: CaseSpec, targets: Record<string, string> = {}): string {
+export function renderPlaywright(input: CaseSpec, targets: Record<string, string> = {}, program?: Pick<BountyProgram, 'inScope' | 'outOfScope' | 'maxRps'>): string {
   const spec=caseSchema.parse(input);
   return [
     "import { test, expect } from '@playwright/test';",
-    "import { caseSchema, executeCase } from '@reprocase/core';",
+    "import { caseSchema, executeCase, ScanNetwork } from '@reprocase/core';",
     "import { BrowserManager } from '@reprocase/browser';",
     '// Verified proof adapter: run inside a ReproCase source checkout after npm ci.',
     '// Set REPROCASE_APPROVE_REVISION to the reviewed revision below; this can create/delete test data.',
@@ -256,6 +263,8 @@ export function renderPlaywright(input: CaseSpec, targets: Record<string, string
     '  test.setTimeout(120000);',
     '  if (process.env.REPROCASE_APPROVE_REVISION !== String(spec.revision)) throw new Error("Review the case and set REPROCASE_APPROVE_REVISION="+spec.revision);',
     '  const targets = process.env.REPROCASE_TARGETS ? JSON.parse(process.env.REPROCASE_TARGETS) : '+JSON.stringify(targets)+';',
+    '  const scope = process.env.REPROCASE_PROGRAM ? JSON.parse(process.env.REPROCASE_PROGRAM) : '+JSON.stringify(program ?? null)+';',
+    '  const network = new ScanNetwork(fetch, {maxRequests:100, program:scope ? {...scope,customHeaders:{}} : {inScope:Object.values(targets).map(origin=>String(origin)+"/*"),outOfScope:[],maxRps:10,customHeaders:{}}});',
     '  const expected = process.env.REPROCASE_EXPECT_VERDICT ?? "reproduced";',
     '  if (!["reproduced", "not_reproduced"].includes(expected)) throw new Error("Expected verdict must be reproduced or not_reproduced");',
     '  const sessions = new BrowserManager();',
@@ -264,10 +273,12 @@ export function renderPlaywright(input: CaseSpec, targets: Record<string, string
     '      const suffix = actor.id.toUpperCase();',
     '      const token = process.env["REPROCASE_TOKEN_"+suffix], cookie = process.env["REPROCASE_COOKIE_"+suffix];',
     '      if (!targets[actor.identity.origin]) throw new Error("Missing approved target for "+actor.identity.origin);',
-    '      if (!token && !cookie) throw new Error("Connect the test account for "+actor.id+" using its TOKEN or COOKIE environment variable");',
-    '      await sessions.connectDirect(actor.id, {origin:targets[actor.identity.origin], ...(token?{token}:{}), ...(cookie?{cookie}:{})});',
+    '      const state = process.env["REPROCASE_BROWSER_STATE_"+suffix];',
+    '      if (spec.kind === "cors_read" && !state) throw new Error("CORS needs a local Playwright storage-state file via REPROCASE_BROWSER_STATE_"+suffix);',
+    '      if (state) await sessions.connectBrowserState(actor.id, targets[actor.identity.origin], state);',
+    '      else { if (!token && !cookie) throw new Error("Connect the test account for "+actor.id+" using TOKEN or COOKIE"); await sessions.connectDirect(actor.id, {origin:targets[actor.identity.origin], ...(token?{token}:{}), ...(cookie?{cookie}:{})}); }',
     '    }',
-    '    const result = await executeCase({...spec,policy:{...spec.policy,acknowledged:true}}, {targets,approvedRevision:spec.revision}, {request:(actor,req,signal)=>sessions.request(actor,req,signal),knownSecrets:()=>sessions.knownSecrets()});',
+    '    const result = await executeCase({...spec,policy:{...spec.policy,acknowledged:true}}, {targets,approvedRevision:spec.revision}, {request:async(actor,req,signal)=>{await network.authorize(req.url,signal);return sessions.request(actor,req,signal);},anonymous:async(req,signal)=>{await network.authorize(req.url,signal);return sessions.anonymous(req,signal);},browserFetch:(actor,req,origin,signal)=>sessions.browserFetch(actor,req,origin,url=>network.authorize(url,signal),signal),knownSecrets:()=>sessions.knownSecrets()});',
     '    await testInfo.attach("reprocase-result", {body:JSON.stringify(result,null,2),contentType:"application/json"});',
     '    expect(result.state, result.reason).toBe("completed");',
     '    expect(result.verdict, result.code+": "+result.reason).toBe(expected);',

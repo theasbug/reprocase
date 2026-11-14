@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { CaseSpec, Json, MatrixCell, MatrixResult, RunConfig, RunResult, SessionTransport } from './schema.ts';
+import { caseSchema, type CaseSpec, type Json, type MatrixCell, type MatrixResult, type RunConfig, type RunResult, type SessionTransport } from './schema.ts';
 import { executeCase } from './runner.ts';
 import { createRedactor } from './redact.ts';
 
@@ -21,6 +21,7 @@ export async function executeMatrix(
   transport: SessionTransport,
   options: { signal?: AbortSignal; onRun?: (run: RunResult) => void } = {},
 ): Promise<MatrixResult> {
+  if (spec.sessionProof) throw new Error('Role matrices apply to fresh-resource authorization cases only');
   const startedAt = new Date().toISOString();
   const ownerActor = spec.resources[0]?.ownerActor ?? spec.actors[0]?.id ?? 'owner';
   const challengers = spec.actors.filter(a => a.id !== ownerActor);
@@ -29,7 +30,7 @@ export async function executeMatrix(
 
   for (const challenger of challengers) {
     if (options.signal?.aborted) break;
-    const variant: CaseSpec = {
+    const variant = caseSchema.parse({
       ...spec,
       actors: spec.actors.filter(a => a.id === ownerActor || a.id === challenger.id),
       preconditions: spec.preconditions.map(c => ({
@@ -69,7 +70,7 @@ export async function executeMatrix(
           ...(c.right === undefined ? {} : { right: remapRefs(c.right, nonOwners, challenger.id) }),
         })),
       },
-    };
+    });
 
     const run = await executeCase(variant, config, transport, { signal: options.signal });
     options.onRun?.(run);

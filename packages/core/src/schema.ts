@@ -41,7 +41,7 @@ export const stepSchema = z.strictObject({
   checks: z.array(conditionSchema).default([]),
 });
 export type StepSpec = z.infer<typeof stepSchema>;
-export const caseSchema = z.strictObject({
+export const caseV1Schema = z.strictObject({
   schemaVersion: z.literal(1), id, revision: z.number().int().positive(),
   title: z.string().min(1).max(200), description: z.string().max(12000).default(''),
   policy: z.strictObject({ statement: z.string().min(1), acknowledged: z.boolean() }),
@@ -52,9 +52,26 @@ export const caseSchema = z.strictObject({
   steps: z.array(stepSchema).min(1).max(200),
   witness: z.strictObject({
     success: z.array(conditionSchema).min(1), rejection: z.array(conditionSchema).min(1),
-    writeProof: z.strictObject({ resource: id, probe: id, before: id, after: id, fieldPointer: z.string().startsWith('/'), mutationPointer: z.string().startsWith('/') }).optional(),
+    writeProof: z.strictObject({ resource: id, probe: id, before: id, after: id, fieldPointer: z.string().startsWith('/'), mutationPointer: z.string().startsWith('/'), expected: z.never().optional(), control: z.never().optional() }).optional(),
   }),
+  kind: z.never().optional(), boundary: z.never().optional(), sessionProof: z.never().optional(),
 });
+const scalarSchema = z.union([z.string().min(1).max(2000), z.number().finite(), z.boolean()]);
+export const caseV2Schema = caseV1Schema.extend({
+  schemaVersion: z.literal(2), kind: z.enum(['authorization', 'function_read', 'cors_read']),
+  boundary: z.enum(['object', 'role']).default('object'),
+  sessionProof: z.strictObject({ request: requestSchema, fieldPointer: z.string().startsWith('/').max(512) }).optional(),
+  witness: z.strictObject({
+    success: z.array(conditionSchema), rejection: z.array(conditionSchema),
+    writeProof: caseV1Schema.shape.witness.shape.writeProof.unwrap().extend({
+      expected: scalarSchema.optional(), control: z.strictObject({ step: id, before: id, mutation: id, resource: id, fieldPointer: z.string().startsWith('/') }).optional(),
+    }).optional(),
+  }),
+}).superRefine((v, ctx) => {
+  if (v.kind === 'authorization' && (v.sessionProof || !v.resources.length || !v.witness.success.length || !v.witness.rejection.length)) ctx.addIssue({ code: 'custom', message: 'Authorization needs fresh-resource witnesses and no session proof' });
+  if (v.kind !== 'authorization' && (!v.sessionProof || v.resources.length || v.witness.writeProof)) ctx.addIssue({ code: 'custom', message: 'Session proofs need their request and field, with no resource/write witness' });
+});
+export const caseSchema = z.union([caseV1Schema, caseV2Schema]);
 export type CaseSpec = z.infer<typeof caseSchema>;
 export interface Identity { id: Json; tenant?: Json; role?: Json; }
 export interface ResolvedRequest { url: string; method: string; headers: Record<string, string>; contentType?: 'json' | 'form' | 'multipart' | 'graphql'; body?: Json; }
@@ -62,6 +79,8 @@ export interface HttpResponse { status: number; headers: Record<string, string>;
 export interface SessionTransport {
   request(actorId: string, request: ResolvedRequest, signal?: AbortSignal): Promise<HttpResponse>;
   knownSecrets(): string[];
+  anonymous?(request: ResolvedRequest, signal?: AbortSignal): Promise<HttpResponse>;
+  browserFetch?(actorId: string, request: ResolvedRequest, origin: 'foreign' | 'null' | 'same', signal?: AbortSignal): Promise<HttpResponse>;
 }
 export interface BindingProfile {
   id: string; actors: Record<string, { mode: 'browser' | 'direct'; origin: string; connected: boolean; identity?: Identity }>;
@@ -109,18 +128,20 @@ export interface MatrixResult {
   summary: { totalActors: number; reproduced: number; notReproduced: number; inconclusive: number };
 }
 export interface RunResult {
-  schemaVersion: 1; id: string; caseId: string; caseRevision: number;
+  schemaVersion: 1 | 2; id: string; caseId: string; caseRevision: number;
   state: 'running' | 'completed' | 'cancelled'; verdict: Verdict; reason: string; code: string;
   startedAt: string; finishedAt?: string; steps: StepResult[]; checks: CheckResult[];
   identities: Record<string, Identity>; requests: number; cleanupErrors: string[];
-  setup: 'created_this_run';
+  setup: 'created_this_run' | 'verified_session';
+  /** Local-only recovery addresses; always omitted from shareable evidence. */
+  localCleanupTargets?: string[];
 }
 export interface RunEvent { type: 'started' | 'step' | 'check' | 'finished'; run: RunResult; }
 export const packageSchema = z.strictObject({
-  format: z.literal('reprocase'), schemaVersion: z.literal(1),
+  format: z.literal('reprocase'), schemaVersion: z.union([z.literal(1), z.literal(2)]),
   exportedAt: z.string(), case: caseSchema,
   evidence: jsonSchema.optional(), redactions: z.array(z.string()).default([]),
-});
+}).refine(v => v.schemaVersion === v.case.schemaVersion, 'Package and case versions must match');
 export type ReproPackage = z.infer<typeof packageSchema>;
 export interface ValidationIssue { path: string; message: string; level: 'error' | 'warning'; }
 export type AISettings = { provider: 'openai' | 'compatible' | 'anthropic'; baseURL?: string; apiKey?: string; model: string };

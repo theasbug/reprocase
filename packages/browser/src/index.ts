@@ -11,6 +11,7 @@ export interface ActorSessionStatus {
 }
 export interface DirectConnection {
   origin: string; token?: string; cookie?: string; headers?: Record<string, string>;
+  browserState?: string;
   login?: { path: string; method?: string; body?: Json };
 }
 export interface BrowserAction {
@@ -81,6 +82,87 @@ export class BrowserManager {
   private secrets = new Set<string>();
 
   knownSecrets(): string[] { return [...this.secrets]; }
+  /** Restore an explicitly supplied local browser state. State is never included in case exports. */
+  async connectBrowserState(key: string, origin: string, storageState: NonNullable<Parameters<Browser['newContext']>[0]>['storageState']) {
+    await this.close(key);
+    origin = originOf(origin);
+    const browser = await chromium.launch({ headless: true, executablePath: process.env.REPROCASE_CHROMIUM_EXECUTABLE });
+    try {
+      const context = await browser.newContext({ storageState, serviceWorkers: 'block' });
+      const page = await context.newPage();
+      for (const cookie of await context.cookies()) this.remember(cookie.value);
+      this.sessions.set(key, { status: { id: key, origin, mode: 'browser', connected: false }, api: context.request, browser, context, page, headers: {}, fields: new Map(), secretRefs: new Map(), recording: false, entries: [], generation: 0 });
+      return this.status(key)!;
+    } catch (e) { await browser.close(); throw e; }
+  }
+
+  async anonymous(request: ResolvedRequest, signal?: AbortSignal): Promise<HttpResponse> {
+    const key = `anonymous-${randomUUID()}`;
+    await this.connectDirect(key, { origin: originOf(request.url) });
+    try { return await this.request(key, { ...request, headers: {} }, signal); }
+    finally { await this.close(key); }
+  }
+
+  /** Only the probe document is fulfilled locally. Target responses and browser security stay real. */
+  async browserFetch(key: string, request: ResolvedRequest, source: 'foreign' | 'null' | 'same', authorize: (url: string) => Promise<unknown>, signal?: AbortSignal): Promise<HttpResponse> {
+    const session = this.get(key);
+    if (!session.browser || !session.context || session.status.mode !== 'browser') throw new Error('CORS proof requires Sign in in a real browser; Bearer/header/direct-cookie bindings are insufficient.');
+    if (request.method !== 'GET' || originOf(request.url) !== session.status.origin) throw new Error('Browser proof must read the bound API origin.');
+    signal?.throwIfAborted();
+    const context = session.context;
+    const page = await context.newPage();
+    const documentUrl = `${source === 'same' ? session.status.origin : 'https://reprocase-probe.invalid'}/__reprocase_${randomUUID()}`;
+    let count = 0, policyError: unknown, corsBlocked = false, receivedTargetResponse = false;
+    let targetHeaders: Record<string, string> = {};
+    page.on('response', response => { if (response.url() === request.url) targetHeaders = Object.fromEntries(Object.entries(response.headers()).filter(([key]) => /^(access-control-allow-origin|access-control-allow-credentials|vary|content-type)$/i.test(key))); });
+    const cdp = await context.newCDPSession(page);
+    const sessions = [cdp];
+    const observeNetwork = async (client: typeof cdp) => {
+      const ids = new Set<string>();
+      client.on('Network.requestWillBeSent', (event: any) => { if (event.request.url === request.url) ids.add(event.requestId); });
+      client.on('Network.responseReceivedExtraInfo', (event: any) => { if (ids.has(event.requestId) && event.statusCode >= 100) receivedTargetResponse = true; });
+      client.on('Network.loadingFailed', (event: any) => { if (ids.has(event.requestId) && event.corsErrorStatus) corsBlocked = true; });
+      client.on('Log.entryAdded', (event: any) => securityMessage(event.entry.text));
+      await client.send('Network.enable'); await client.send('Log.enable');
+    };
+    const securityMessage = (text: string) => { if (/blocked by CORS policy|access.control.allow.origin|access.control.allow.credentials/i.test(text)) corsBlocked = true; };
+    await observeNetwork(cdp);
+    page.on('console', message => securityMessage(message.text()));
+    const routeHandler = async (route: import('playwright').Route) => {
+      if (route.request().frame().page() !== page) return route.fallback();
+      if (route.request().url() === documentUrl && route.request().isNavigationRequest()) return route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><title>ReproCase browser proof</title>' });
+      try {
+        signal?.throwIfAborted();
+        if (originOf(route.request().url()) !== session.status.origin) throw new Error('Browser request leaves the bound target origin');
+        await authorize(route.request().url()); count++;
+        await route.continue();
+      } catch (e) { policyError = e; await route.abort(); }
+    };
+    await context.route('**/*', routeHandler);
+    const abort = () => { void page.close(); };
+    signal?.addEventListener('abort', abort, { once: true });
+    try {
+      await page.goto(documentUrl);
+      let frame = page.mainFrame();
+      if (source === 'null') {
+        const attached = page.waitForEvent('frameattached');
+        await page.evaluate(() => { const frame = document.createElement('iframe'); frame.sandbox.add('allow-scripts'); frame.srcdoc = '<!doctype html><title>Opaque origin proof</title>'; document.body.append(frame); });
+        frame = await attached; await frame.waitForURL('about:srcdoc');
+        try { const child = await context.newCDPSession(frame); sessions.push(child); await observeNetwork(child); } catch { /* Same-process frames use the page session. */ }
+      }
+      const result = await frame.evaluate(async url => {
+        const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 15000);
+        try { const r = await fetch(url, { credentials: 'include', redirect: 'error', cache: 'no-store', signal: ctrl.signal }); return { status: r.status, text: (await r.text()).slice(0, 2097153) }; }
+        catch (e) { return { status: 0, text: String(e) }; } finally { clearTimeout(timer); }
+      }, request.url);
+      signal?.throwIfAborted();
+      if (policyError) throw policyError;
+      if (result.text.length > MAX_BODY) throw new Error('Response exceeds the evidence limit');
+      let body: Json; try { body = JSON.parse(result.text); } catch { body = result.text; }
+      this.rememberBody(body);
+      return { status: result.status, headers: { ...targetHeaders, 'x-reprocase-browser-origin': source === 'null' ? 'null' : new URL(documentUrl).origin, 'x-reprocase-request-count': String(count), ...(result.status === 0 ? { 'x-reprocase-browser-block': corsBlocked && receivedTargetResponse ? 'cors' : 'network' } : {}) }, body };
+    } finally { signal?.removeEventListener('abort', abort); await context.unroute('**/*', routeHandler); for (const client of sessions) await client.detach().catch(() => {}); await page.close().catch(() => {}); }
+  }
   private remember(value: unknown): void {
     if (typeof value === 'string' && value) this.secrets.add(value);
   }
@@ -146,6 +228,8 @@ export class BrowserManager {
     return { ...session.status, identity: session.status.identity ? this.redact(session.status.identity) : undefined, error: session.status.error ? this.redactText(session.status.error) : undefined, url: pageURL ? this.redactURL(pageURL) : undefined };
   }
   statuses(): ActorSessionStatus[] { return [...this.sessions.keys()].map(key => this.status(key)!); }
+  /** Internal inference uses raw verified identity, never the redacted UI presentation. */
+  verifiedIdentity(key: string): Identity | undefined { const value = this.get(key).status.identity; return value ? structuredClone(value) : undefined; }
   private get(key: string): Session {
     const session = this.sessions.get(key);
     if (!session) throw new Error('Connect this account before using it.');
@@ -163,7 +247,7 @@ export class BrowserManager {
     } catch {
       throw new Error('Chromium could not start. Run npm run browsers:install, or set REPROCASE_CHROMIUM_EXECUTABLE to your Chromium executable.');
     }
-    const context = await browser.newContext({ ignoreHTTPSErrors: false });
+    const context = await browser.newContext({ ignoreHTTPSErrors: false, serviceWorkers: 'block' });
     const page = await context.newPage();
     const session: Session = { status: { id: key, origin, mode: 'browser', connected: false }, browser, context, page, api: context.request, headers: {}, fields: new Map(), secretRefs: new Map(), recording: false, entries: [], generation: 0 };
     this.sessions.set(key, session);
@@ -189,6 +273,10 @@ export class BrowserManager {
   }
   private async connectDirectInternal(key: string, input: DirectConnection): Promise<ActorSessionStatus> {
     const origin = originOf(input.origin);
+    if (input.browserState) {
+      if (input.token || input.cookie || input.headers || input.login) throw new Error('Browser state cannot be mixed with direct credentials');
+      return this.connectBrowserState(key, origin, input.browserState);
+    }
     const headers = safeHeaders(input.headers ?? {}, true);
     if (input.token) headers.authorization = `Bearer ${input.token}`;
     await this.close(key);
@@ -276,10 +364,10 @@ export class BrowserManager {
     }
   }
 
-  async verify(key: string, probe: ActorSpec['identity']): Promise<Identity> {
+  async verify(key: string, probe: ActorSpec['identity'], signal?: AbortSignal): Promise<Identity> {
     const session = this.get(key);
     session.status.connected = false;
-    const response = await this.request(key, { url: scopedURL(session.status.origin, probe.path), method: 'GET', headers: {} });
+    const response = await this.request(key, { url: scopedURL(session.status.origin, probe.path), method: 'GET', headers: {} }, signal);
     if (response.status !== 200) { session.status.connected = false; throw new Error(`Identity probe returned HTTP ${response.status}.`); }
     const id = pointer(response.body, probe.idPointer);
     if (!scalar(id)) { session.status.connected = false; throw new Error('The identity probe did not return a nonempty account ID.'); }

@@ -1,5 +1,5 @@
 import { caseSchema, type CaseSpec, type ValidationIssue } from './schema.ts';
-import { consumedRequestRefs, jsonPointer, refs } from './values.ts';
+import { consumedRequestRefs, equal, jsonPointer, refs, resolveRequest } from './values.ts';
 
 export function validateCase(input: unknown): ValidationIssue[] {
   const parsed = caseSchema.safeParse(input);
@@ -12,7 +12,7 @@ export function validateCase(input: unknown): ValidationIssue[] {
   if (actors.size !== spec.actors.length) error('actors', 'Actor identifiers must be unique');
   if (origins.size !== spec.origins.length) error('origins', 'Origin identifiers must be unique');
   if (!spec.policy.acknowledged) error('policy.acknowledged', 'Review and acknowledge the expected access policy');
-  if (actors.size < 2) error('actors', 'Authorization reproduction requires at least two distinct actors');
+  if (actors.size < 2 && spec.kind !== 'cors_read') error('actors', 'Authorization reproduction requires at least two distinct actors');
   const available = new Set(['run.id', 'run.marker']);
   for (const actor of spec.actors) {
     if (!origins.has(actor.identity.origin)) error(`actors.${actor.id}.identity`, 'Unknown identity origin');
@@ -23,6 +23,20 @@ export function validateCase(input: unknown): ValidationIssue[] {
     available.add(`actors.${actor.id}.id`);
     if (actor.identity.tenantPointer !== undefined) available.add(`actors.${actor.id}.tenant`);
     if (actor.identity.rolePointer !== undefined) available.add(`actors.${actor.id}.role`);
+  }
+  if (spec.schemaVersion === 2 && spec.boundary === 'role') {
+    if (spec.actors.length !== 2 || spec.actors.some(a => !a.identity.rolePointer || a.expectedRole === undefined) || spec.actors[0]?.expectedRole === spec.actors[1]?.expectedRole) error('actors', 'Role proofs require two distinct, explicitly expected live roles');
+  }
+  if (spec.sessionProof) {
+    const req = spec.sessionProof.request;
+    if (req.method !== 'GET' || req.actor !== 'owner' || !actors.has(req.actor) || !origins.has(req.origin) || refs(req).length) error('sessionProof', 'Session proofs require a bound, literal GET request by the authorized account');
+    if (spec.kind === 'cors_read' && (spec.actors.length !== 1 || spec.actors[0]?.id !== 'owner')) error('actors', 'CORS requires exactly one victim browser account');
+    if (spec.kind === 'function_read' && !spec.actors.some(a => a.id === 'researcher')) error('actors', 'Function proofs require a lower-privileged account');
+    if (spec.steps.length !== 1 || spec.steps[0].effect !== 'read' || !equal(spec.steps[0].request, req)) error('steps', 'The plan must describe the exact session proof GET');
+    if (spec.witness.success.length || spec.witness.rejection.length) error('witness', 'Session proofs use their dedicated live private-field validator');
+    if (/__proto__|constructor|prototype/.test(spec.sessionProof.fieldPointer)) error('sessionProof.fieldPointer', 'Unsafe field pointer');
+    try { resolveRequest(req, Object.fromEntries(spec.origins.map(o => [o.id, 'https://example.test'])), {}); } catch (e) { error('sessionProof.request', (e as Error).message); }
+    return issues;
   }
   const inspectRefs = (value: unknown, path: string) => {
     for (const ref of refs(value)) {
@@ -95,14 +109,21 @@ export function validateCase(input: unknown): ValidationIssue[] {
     const ownerRead = (step: typeof before) => step && resource && step.effect === 'read' && (step.request.method === 'GET' || (step.request.method === 'POST' && step.request.contentType === 'graphql')) && step.request.actor === resource.ownerActor && consumedRequestRefs(step.request).includes(resource.idRef);
     let marker: unknown;
     try { marker = jsonPointer(probe?.request.body, proof.mutationPointer); } catch { /* Report as a contract error below. */ }
-    const freshMutation = marker && typeof marker === 'object' && Object.keys(marker).length === 1 && (marker as any).$ref === 'run.marker';
+    const freshMutation = (marker && typeof marker === 'object' && Object.keys(marker).length === 1 && (marker as any).$ref === 'run.marker') || (spec.schemaVersion === 2 && proof.expected !== undefined && equal(marker, proof.expected));
+    if (spec.schemaVersion === 2) {
+      const control = proof.control && spec.steps.find(s => s.id === proof.control!.step);
+      const cr = spec.resources.find(r => r.id === proof.control?.resource);
+      const cb = spec.steps.find(s => s.id === proof.control?.before), cw = spec.steps.find(s => s.id === proof.control?.mutation);
+      const normalize = (req: CaseSpec['steps'][number]['request'] | undefined, from?: string) => req && JSON.parse(JSON.stringify({ method: req.method, path: req.path, pathParams: req.pathParams, query: req.query, body: req.body, contentType: req.contentType }).replaceAll(from ?? 'unused_ref', resource?.idRef ?? 'missing_ref'));
+      if (!control || !cb || !cw || !cr || cr.id === resource?.id || cr.ownerActor !== resource?.ownerActor || [control, cb, cw].some(s => s.phase !== 'prepare' || s.request.actor !== cr.ownerActor || !consumedRequestRefs(s.request).includes(cr.idRef)) || control.effect !== 'read' || cb.effect !== 'read' || cw.effect !== 'write' || !(at(cb) < at(cw) && at(cw) < at(control) && at(control) < at(before)) || !equal(normalize(cw.request, cr.idRef), normalize(probe?.request)) || proof.control?.fieldPointer !== proof.fieldPointer) error('witness.writeProof.control', 'A separate fresh owner control must read, perform the same mutation, and independently observe its result before probing');
+    }
     const exclusiveWrite = spec.steps.slice(at(before) + 1, at(after)).filter(s => s.effect === 'write').every(s => s.id === probe?.id);
     if (!resource || !before || !probe || !after || before.phase !== 'prepare' || after.phase !== 'verify' || !ownerRead(before) || !ownerRead(after) || probe.phase !== 'probe' || probe.effect !== 'write' || !['POST', 'PUT', 'PATCH'].includes(probe.request.method) || probe.request.actor === resource.ownerActor || !consumedRequestRefs(probe.request).includes(resource.idRef) || !(at(before) < at(probe) && at(probe) < at(after)) || !freshMutation || !exclusiveWrite) error('witness.writeProof', 'Write proof requires an owner baseline, one different-actor mutation with a fresh marker, then an owner read of the same created resource');
     else probeIds.add(after.id);
   }
   const observedWitness = spec.witness.success.some(condition => {
     const used = refs(condition);
-    const bodyWitness = condition.op !== 'exists' && used.some(r => /^steps\.([^.]+)\.(?:body(?:\.|$)|text$)/.test(r) && probeIds.has(r.split('.')[1])) && used.some(r => r === 'run.marker' || r.startsWith('captures.') || r.startsWith('actors.'));
+    const bodyWitness = condition.op !== 'exists' && used.some(r => /^steps\.([^.]+)\.(?:body(?:\.|$)|text$)/.test(r) && probeIds.has(r.split('.')[1])) && (used.some(r => r === 'run.marker' || r.startsWith('captures.') || r.startsWith('actors.')) || (spec.schemaVersion === 2 && proof?.expected !== undefined && condition.op === 'eq' && equal(condition.right, proof.expected)));
     const concurrencyWitness = condition.op !== 'exists' && used.some(r => /^steps\.([^.]+)\.concurrency\.succeeded$/.test(r) && probeIds.has(r.split('.')[1]));
     return bodyWitness || concurrencyWitness;
   });

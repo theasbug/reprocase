@@ -1,0 +1,387 @@
+{
+  "format": "reprocase",
+  "schemaVersion": 2,
+  "exportedAt": "2026-11-14T20:50:26.781Z",
+  "case": {
+    "schemaVersion": 2,
+    "id": "quick-write-v2",
+    "revision": 1,
+    "title": "Write authorization: /documents/42",
+    "description": "Created with the guided authoring workflow. Review the declared access policy, endpoint mappings and observed relationships before running.",
+    "policy": {
+      "statement": "Only the owner may change this object. Account B must be denied.",
+      "acknowledged": false
+    },
+    "actors": [
+      {
+        "id": "owner",
+        "label": "Resource owner",
+        "color": "#43d9bc",
+        "identity": {
+          "origin": "api",
+          "path": "/me",
+          "idPointer": "/id",
+          "tenantPointer": "/tenant"
+        }
+      },
+      {
+        "id": "researcher",
+        "label": "Researcher",
+        "color": "#a99bff",
+        "identity": {
+          "origin": "api",
+          "path": "/me",
+          "idPointer": "/id",
+          "tenantPointer": "/tenant"
+        }
+      }
+    ],
+    "origins": [
+      {
+        "id": "api",
+        "label": "Application API"
+      }
+    ],
+    "preconditions": [
+      {
+        "id": "different-accounts",
+        "label": "The two live identities are different",
+        "op": "neq",
+        "left": {
+          "$ref": "actors.owner.id"
+        },
+        "right": {
+          "$ref": "actors.researcher.id"
+        }
+      }
+    ],
+    "resources": [
+      {
+        "id": "control",
+        "label": "Controlled resource",
+        "ownerActor": "owner",
+        "createdBy": "control-create",
+        "idRef": "captures.control_resourceId",
+        "ownerRef": "captures.control_resourceOwner",
+        "tenantRef": "captures.control_resourceTenant"
+      },
+      {
+        "id": "resource",
+        "label": "Controlled resource",
+        "ownerActor": "owner",
+        "createdBy": "create-resource",
+        "idRef": "captures.resourceId",
+        "ownerRef": "captures.resourceOwner",
+        "tenantRef": "captures.resourceTenant"
+      }
+    ],
+    "steps": [
+      {
+        "id": "control-create",
+        "label": "Create a separate authorized control object",
+        "phase": "prepare",
+        "effect": "write",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "POST",
+          "path": "/documents",
+          "pathParams": {},
+          "query": {},
+          "headers": {},
+          "contentType": "json",
+          "body": {
+            "text": "before"
+          }
+        },
+        "captures": [
+          {
+            "name": "control_resourceId",
+            "from": "body",
+            "pointer": "/id"
+          },
+          {
+            "name": "control_resourceOwner",
+            "from": "body",
+            "pointer": "/ownerId"
+          },
+          {
+            "name": "control_resourceTenant",
+            "from": "body",
+            "pointer": "/tenant"
+          }
+        ],
+        "checks": []
+      },
+      {
+        "id": "control-before",
+        "label": "Observe the resource as its owner",
+        "phase": "prepare",
+        "effect": "read",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "GET",
+          "path": "/documents/{resource}",
+          "pathParams": {
+            "resource": {
+              "$ref": "captures.control_resourceId"
+            }
+          },
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": []
+      },
+      {
+        "id": "control-write",
+        "label": "Authorized account performs the same change",
+        "phase": "prepare",
+        "effect": "write",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "PATCH",
+          "path": "/documents/{resource}",
+          "pathParams": {
+            "resource": {
+              "$ref": "captures.control_resourceId"
+            }
+          },
+          "query": {},
+          "headers": {},
+          "contentType": "json",
+          "body": {
+            "text": {
+              "$ref": "run.marker"
+            }
+          }
+        },
+        "captures": [],
+        "checks": []
+      },
+      {
+        "id": "control-after",
+        "label": "Observe the authorized control change",
+        "phase": "prepare",
+        "effect": "read",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "GET",
+          "path": "/documents/{resource}",
+          "pathParams": {
+            "resource": {
+              "$ref": "captures.control_resourceId"
+            }
+          },
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": []
+      },
+      {
+        "id": "create-resource",
+        "label": "Create a fresh controlled resource",
+        "phase": "prepare",
+        "effect": "write",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "POST",
+          "path": "/documents",
+          "pathParams": {},
+          "query": {},
+          "headers": {},
+          "contentType": "json",
+          "body": {
+            "text": "before"
+          }
+        },
+        "captures": [
+          {
+            "name": "resourceId",
+            "from": "body",
+            "pointer": "/id"
+          },
+          {
+            "name": "resourceOwner",
+            "from": "body",
+            "pointer": "/ownerId"
+          },
+          {
+            "name": "resourceTenant",
+            "from": "body",
+            "pointer": "/tenant"
+          }
+        ],
+        "checks": []
+      },
+      {
+        "id": "owner-read",
+        "label": "Observe the resource as its owner",
+        "phase": "prepare",
+        "effect": "read",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "GET",
+          "path": "/documents/{resource}",
+          "pathParams": {
+            "resource": {
+              "$ref": "captures.resourceId"
+            }
+          },
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": []
+      },
+      {
+        "id": "probe",
+        "label": "Read the resource as the other account",
+        "phase": "probe",
+        "effect": "write",
+        "request": {
+          "actor": "researcher",
+          "origin": "api",
+          "method": "PATCH",
+          "path": "/documents/{resource}",
+          "pathParams": {
+            "resource": {
+              "$ref": "captures.resourceId"
+            }
+          },
+          "query": {},
+          "headers": {},
+          "contentType": "json",
+          "body": {
+            "text": {
+              "$ref": "run.marker"
+            }
+          }
+        },
+        "captures": [],
+        "checks": []
+      },
+      {
+        "id": "owner-after",
+        "label": "Owner independently observes the result",
+        "phase": "verify",
+        "effect": "read",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "GET",
+          "path": "/documents/{resource}",
+          "pathParams": {
+            "resource": {
+              "$ref": "captures.resourceId"
+            }
+          },
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": []
+      },
+      {
+        "id": "cleanup",
+        "label": "Remove only the resource created in this run",
+        "phase": "cleanup",
+        "effect": "write",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "DELETE",
+          "path": "/documents/{resource}",
+          "pathParams": {
+            "resource": {
+              "$ref": "captures.resourceId"
+            }
+          },
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": []
+      },
+      {
+        "id": "control-cleanup",
+        "label": "Remove only the resource created in this run",
+        "phase": "cleanup",
+        "effect": "write",
+        "request": {
+          "actor": "owner",
+          "origin": "api",
+          "method": "DELETE",
+          "path": "/documents/{resource}",
+          "pathParams": {
+            "resource": {
+              "$ref": "captures.control_resourceId"
+            }
+          },
+          "query": {},
+          "headers": {}
+        },
+        "captures": [],
+        "checks": []
+      }
+    ],
+    "witness": {
+      "success": [
+        {
+          "id": "controlled-change",
+          "label": "Owner observes the exact controlled transition",
+          "op": "eq",
+          "left": {
+            "$ref": "steps.owner-after.body.text"
+          },
+          "right": {
+            "$ref": "run.marker"
+          }
+        }
+      ],
+      "rejection": [
+        {
+          "id": "explicit-denial",
+          "label": "The unauthorized mutation was denied",
+          "op": "in",
+          "left": {
+            "$ref": "steps.probe.status"
+          },
+          "right": [
+            401,
+            403,
+            404
+          ]
+        }
+      ],
+      "writeProof": {
+        "resource": "resource",
+        "probe": "probe",
+        "before": "owner-read",
+        "after": "owner-after",
+        "fieldPointer": "/text",
+        "mutationPointer": "/text",
+        "control": {
+          "step": "control-after",
+          "before": "control-before",
+          "mutation": "control-write",
+          "resource": "control",
+          "fieldPointer": "/text"
+        }
+      }
+    },
+    "kind": "authorization",
+    "boundary": "object"
+  },
+  "redactions": [
+    "Account credentials are not included.",
+    "Observed actor, resource, and run-marker bindings are replaced by symbolic aliases where available.",
+    "Review the export for application-specific personal information before sharing."
+  ]
+}
