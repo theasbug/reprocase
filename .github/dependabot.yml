@@ -7,8 +7,17 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    # Major versions are upgraded deliberately, with manual testing.
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     open-pull-requests-limit: 5
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    ignore:
+      # v5 and v6 fail in setup-gradle on this repository's CI; v6 also moves caching
+      # into a proprietary component with separate terms of use. Stay on v4 for now.
+      - dependency-name: gradle/actions
+        versions: ['>=5']

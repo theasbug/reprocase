@@ -26,7 +26,7 @@ jobs:
       - run: npm test
       - run: npm run desktop:build
       - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: failure-${{ matrix.os }}
@@ -54,7 +54,7 @@ jobs:
         run: |
           $env:REPROCASE_DESKTOP_EXE = Join-Path $env:REPROCASE_PACKAGE_OUT 'ReproCase-win32-x64/ReproCase.exe'
           npm run test:desktop -- desktop.spec.ts
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-beta
           path: release/windows/ReproCase-win32-x64
@@ -83,7 +83,7 @@ jobs:
         working-directory: integrations/burp
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -91,7 +91,7 @@ jobs:
         with:
           gradle-version: '8.14'
       - run: gradle --no-daemon jar
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: reprocase-burp
           path: integrations/burp/build/libs/*.jar
