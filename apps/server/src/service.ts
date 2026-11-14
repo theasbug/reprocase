@@ -463,13 +463,23 @@ export class ReproService {
     this.actor(caseId, actorId);
     return this.browsers.open(this.key(caseId, actorId), targetOrigin(origin));
   }
+  /** Identity probes follow the same scope, exclusion, rate and budget policy as runs. */
+  private identityNetwork() {
+    return new ScanNetwork(fetch, { ...this.scanOptions(), maxRequests: 60 });
+  }
+  private async scopedVerify(key: string, identity: CaseSpec['actors'][number]['identity'], network: ScanNetwork) {
+    const origin = this.browsers.status(key)?.origin;
+    if (!origin) throw new Error('Connect this account before using it.');
+    await network.authorize(new URL(identity.path, origin).toString());
+    return this.browsers.verify(key, identity);
+  }
   async connectDirect(caseId: string, actorId: string, input: DirectConnection) {
     this.idle(caseId);
     const actor = this.actor(caseId, actorId);
     targetOrigin(input.origin);
     await this.browsers.connectDirect(this.key(caseId, actorId), input);
     try {
-      await this.browsers.verify(this.key(caseId, actorId), actor.identity);
+      await this.scopedVerify(this.key(caseId, actorId), actor.identity, this.identityNetwork());
     } catch {
       /* Keep an unverified binding available for correction in the UI. */
     }
@@ -490,14 +500,16 @@ export class ReproService {
       if (!credential) throw Object.assign(new Error(`Add a credential for ${actor.label}.`), { statusCode: 422 });
       await this.browsers.connectDirect(this.key(caseId, actor.id), directInput(origin, credential));
     }
-    const verifyAll = async () => { for (const actor of spec.actors) await this.browsers.verify(this.key(caseId, actor.id), actor.identity); };
+    const network = this.identityNetwork();
+    const verifyAll = async () => { for (const actor of spec.actors) await this.scopedVerify(this.key(caseId, actor.id), actor.identity, network); };
     let remapped: undefined | { path: string; idPointer: string; tenantPointer?: string };
     try { await verifyAll(); }
-    catch {
+    catch (error) {
+      // A scope or budget refusal is final: never retry other identity paths around it.
+      if (error instanceof Error && /scope|excluded|budget|cancel/i.test(error.message)) throw Object.assign(error, { statusCode: 422 });
       if (spec.actors.length < 2) throw Object.assign(new Error('The identity check failed and two accounts are needed to detect it automatically.'), { statusCode: 422 });
       if (spec.actors.some(x => x.expectedRole !== undefined)) throw Object.assign(new Error('The identity check failed. This case checks roles, so map the identity and role fields in the case editor.'), { statusCode: 422 });
       const [a, b] = spec.actors;
-      const network = new ScanNetwork(fetch, { ...this.scanOptions(), maxRequests: 60 });
       const send = async (actorId: string, path: string) => { const url = new URL(path, origin).toString(); await network.authorize(url); return this.browsers.request(this.key(caseId, actorId), { url, method: 'GET', headers: {} }); };
       for (const path of [...new Set([a!.identity.path, ...IDENTITY_PATHS])]) {
         const ra = await send(a!.id, path), rb = await send(b!.id, path);
@@ -523,7 +535,7 @@ export class ReproService {
     const actor = this.actor(caseId, actorId),
       status = this.browsers.status(this.key(caseId, actorId));
     if (targets?.[actor.identity.origin] && targetOrigin(targets[actor.identity.origin]) !== status?.origin) throw new Error('The account session is bound to a different target origin');
-    return this.browsers.verify(this.key(caseId, actorId), actor.identity);
+    return this.scopedVerify(this.key(caseId, actorId), actor.identity, this.identityNetwork());
   }
   async browserAction(caseId: string, actorId: string, action: BrowserAction) {
     this.idle(caseId);

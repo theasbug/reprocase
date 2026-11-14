@@ -84,6 +84,17 @@ export class QuickProof {
     return this.deps.browsers.request(this.key(id, actor), { ...rest, url });
   }
 
+  /** Deletes the observation object. Returns a message naming the object when that did not succeed. */
+  private async removeObservation(id: string, network: ScanNetwork, objectPath: string, csrfHeaders: (actor: Actor) => Promise<Record<string, string>>): Promise<string | undefined> {
+    const where = `${this.get(id).origin}${objectPath}`;
+    try {
+      const del = await this.send(id, 'owner', network, { method: 'DELETE', path: objectPath, headers: await csrfHeaders('owner') });
+      return del.status >= 300 ? `The observation object could not be deleted (HTTP ${del.status}). Remove it manually: ${where}` : undefined;
+    } catch {
+      return `The observation object could not be deleted. Remove it manually: ${where}`;
+    }
+  }
+
   /** Finds the "who am I" endpoint and the identity fields by comparing both accounts. */
   async detectIdentity(id: string, input: z.infer<typeof identitySchema> = {}) {
     const s = this.get(id);
@@ -102,7 +113,11 @@ export class QuickProof {
     if (!found) return { found: false as const, tried, message: input.path ? 'This endpoint did not return two different account IDs. Check that both accounts are signed in and different.' : 'No common identity endpoint answered for both accounts. Enter the path your app uses for the signed-in user (for example /api/v2/account).' };
     const guess = { ...found.guess, ...(input.idPointer ? { idPointer: input.idPointer } : {}), ...(input.tenantPointer !== undefined ? (input.tenantPointer ? { tenantPointer: input.tenantPointer } : { tenantPointer: undefined }) : {}) };
     if (input.tenantPointer !== undefined) guess.sameTenant = !guess.tenantPointer || String(jsonPointer(found.a, guess.tenantPointer)) === String(jsonPointer(found.b, guess.tenantPointer));
-    for (const a of ['owner', 'researcher'] as const) await this.deps.browsers.verify(this.key(id, a), { origin: 'api', path: guess.path, idPointer: guess.idPointer, ...(guess.tenantPointer ? { tenantPointer: guess.tenantPointer } : {}) });
+    for (const a of ['owner', 'researcher'] as const) {
+      // The confirming identity request goes through the same policy as the detection requests.
+      await network.authorize(new URL(guess.path, s.origin).toString());
+      await this.deps.browsers.verify(this.key(id, a), { origin: 'api', path: guess.path, idPointer: guess.idPointer, ...(guess.tenantPointer ? { tenantPointer: guess.tenantPointer } : {}) });
+    }
     s.identity = guess;
     return { found: true as const, tried, identity: guess, status: this.status(id) };
   }
@@ -149,22 +164,31 @@ export class QuickProof {
       }
     }
     if (created.status < 200 || created.status >= 300) throw Object.assign(new Error(`The creation request returned HTTP ${created.status} for the owner account. Check the request body and that the account can create this object.`), { statusCode: 422 });
-    const guess = inferCreate({ requestBody: create.body, responseBody: created.body, sampleId: template.sampleId, owner });
+    let guess: ReturnType<typeof inferCreate>;
+    try { guess = inferCreate({ requestBody: create.body, responseBody: created.body, sampleId: template.sampleId, owner }); }
+    catch (error) {
+      // The object exists on the target but its ID is unknown, so it cannot be removed automatically.
+      throw Object.assign(new Error(`${(error as Error).message} The creation returned HTTP ${created.status}, so an object was probably created with account A; remove it manually.`), { statusCode: 422 });
+    }
     notes.push(...guess.notes);
     const newId = jsonPointer(created.body, guess.idResponsePointer);
     const objectPath = template.readPath.replace('{resource}', encodeURIComponent(String(newId)));
-    const ownerRead = await this.send(id, 'owner', network, { method: 'GET', path: objectPath, headers: {} });
-    if (!guess.ownerResponsePointer && ownerRead.status === 200) {
-      const pointer = findOwnerPointer(ownerRead.body, owner.id);
-      if (pointer) { guess.ownerResponsePointer = pointer; guess.ownerSource = 'owner_read'; }
-    }
-    const other = await this.send(id, 'researcher', network, { method: 'GET', path: objectPath, headers: {} });
-    // Best-effort cleanup of the observation object; the proof run creates and removes its own.
+    let ownerRead: HttpResponse, other: HttpResponse;
     try {
-      const del = await this.send(id, 'owner', network, { method: 'DELETE', path: objectPath, headers: await csrfHeaders('owner') });
-      if (del.status >= 300) notes.push(`The observation object could not be deleted (HTTP ${del.status}). Remove it manually if needed.`);
-    } catch { notes.push('The observation object could not be deleted. Remove it manually if needed.'); }
-    const built = buildQuickProof({ ...(input.title ? { title: input.title } : {}), identity: s.identity, createPath: create.path, createBody: create.body, create: guess, readPath: template.readPath, ...(csrf ? { csrf } : {}) }, id);
+      ownerRead = await this.send(id, 'owner', network, { method: 'GET', path: objectPath, headers: {} });
+      if (!guess.ownerResponsePointer && ownerRead.status === 200) {
+        const pointer = findOwnerPointer(ownerRead.body, owner.id);
+        if (pointer) { guess.ownerResponsePointer = pointer; guess.ownerSource = 'owner_read'; }
+      }
+      other = await this.send(id, 'researcher', network, { method: 'GET', path: objectPath, headers: {} });
+    } catch (error) {
+      const cleanup = await this.removeObservation(id, network, objectPath, csrfHeaders);
+      throw Object.assign(new Error(`${(error as Error).message} ${cleanup ?? 'The observation object was deleted.'}`), { statusCode: 422 });
+    }
+    // The proof run creates and removes its own object; this one only served the observation.
+    const cleanup = await this.removeObservation(id, network, objectPath, csrfHeaders);
+    if (cleanup) notes.push(cleanup);
+    const built = buildQuickProof({ ...(input.title ? { title: input.title } : {}), identity: s.identity, createPath: create.path, createBody: create.body, ...(create.contentType === 'form' ? { createContentType: 'form' as const } : {}), create: guess, readPath: template.readPath, ...(csrf ? { csrf } : {}) }, id);
     const saved = this.deps.saveCase(built.case);
     this.deps.saveTargets(saved.id, { api: s.origin });
     return {

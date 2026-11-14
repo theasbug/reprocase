@@ -138,6 +138,8 @@ export interface QuickProofInput {
   identity: IdentityGuess | { path: string; idPointer: string; tenantPointer?: string; sameTenant: boolean };
   createPath: string;
   createBody: Plain;
+  /** How the creation body is encoded. Defaults to JSON. */
+  createContentType?: 'json' | 'form';
   create: CreateGuess;
   /** The vulnerable request path with a concrete ID, or an already templated path. */
   readPath: string;
@@ -164,6 +166,7 @@ export function buildQuickProof(input: QuickProofInput, caseId?: string) {
     ...(input.identity.tenantPointer ? { tenantPointer: input.identity.tenantPointer } : {}),
     createPath: input.createPath,
     createBody: input.createBody as AuthoringInput['createBody'],
+    ...(input.createContentType === 'form' ? { createContentType: 'form' as const } : {}),
     idResponsePointer: input.create.idResponsePointer,
     ownerResponsePointer: input.create.ownerResponsePointer,
     ownershipSource: input.create.ownerSource ?? 'creation',

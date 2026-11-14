@@ -119,3 +119,56 @@ describe('Outbound work is not multiplied by concurrent calls', () => {
     expect((await api(`/api/quickproof/${id}/identity`, {})).status).toBe(200);
   });
 });
+
+describe('Review fixes', () => {
+  const header = (token: string) => ({ header: { name: 'X-Auth-Token', value: token } });
+
+  it('identity checks obey program scope: an excluded identity endpoint gets no requests', async () => {
+    lab = await startAltApi('vulnerable');
+    server = await createServer({ memory: true, port: 0 });
+    const { id } = await quickProof(lab.users.alice.token, lab.users.bob.token);
+    server.service.saveProgram({ id: 'p', name: 'Lab program', inScope: [`${lab.origin}/*`], outOfScope: [`${lab.origin}/api/v1/profile`], maxRps: 50 });
+    const before = lab.seen().filter(r => r.endsWith('/api/v1/profile')).length;
+
+    const verified = await api(`/api/cases/${id}/verify-on-site`, { origin: lab.origin, accounts: { owner: header(lab.users.alice.token), researcher: header(lab.users.bob.token) } });
+    expect(verified.status).toBe(422);
+    const actorVerify = await api(`/api/cases/${id}/actors/owner/verify`, {});
+    expect(actorVerify.status).toBeGreaterThanOrEqual(400);
+    const qp = (await api('/api/quickproof', { origin: lab.origin })).json.id;
+    await api(`/api/quickproof/${qp}/connect`, { actor: 'owner', ...header(lab.users.alice.token) });
+    await api(`/api/quickproof/${qp}/connect`, { actor: 'researcher', ...header(lab.users.bob.token) });
+    expect((await api(`/api/quickproof/${qp}/identity`, { path: '/api/v1/profile' })).status).toBeGreaterThanOrEqual(400);
+
+    expect(lab.seen().filter(r => r.endsWith('/api/v1/profile')).length).toBe(before);
+  });
+
+  it('keeps a form creation as form in the saved case, so the run succeeds on a form-only API', async () => {
+    lab = await startAltApi('vulnerable', { formOnly: true });
+    server = await createServer({ memory: true, port: 0 });
+    const start = await api('/api/quickproof', { origin: lab.origin });
+    const id = start.json.id;
+    await api(`/api/quickproof/${id}/connect`, { actor: 'owner', ...header(lab.users.alice.token) });
+    await api(`/api/quickproof/${id}/connect`, { actor: 'researcher', ...header(lab.users.bob.token) });
+    expect((await api(`/api/quickproof/${id}/identity`, {})).json.found).toBe(true);
+    const observed = await api(`/api/quickproof/${id}/observe`, { create: 'POST /api/v1/notes HTTP/1.1\nContent-Type: application/x-www-form-urlencoded\n\ntext=hello&color=blue', vulnerable: 'GET /api/v1/notes/7a1f3c2e-1b2c-4d5e-8f90-112233445566' });
+    expect(observed.status, JSON.stringify(observed.json)).toBe(200);
+    const create = observed.json.case.steps.find((s: any) => s.id === 'create-resource');
+    expect(create.request.contentType).toBe('form');
+    const result = await run(id);
+    expect(result.verdict, result.reason).toBe('reproduced');
+  });
+
+  it('deletes the observation object even when the other account’s read fails', async () => {
+    lab = await startAltApi('vulnerable', { breakOtherRead: true });
+    server = await createServer({ memory: true, port: 0 });
+    const id = (await api('/api/quickproof', { origin: lab.origin })).json.id;
+    await api(`/api/quickproof/${id}/connect`, { actor: 'owner', ...header(lab.users.alice.token) });
+    await api(`/api/quickproof/${id}/connect`, { actor: 'researcher', ...header(lab.users.bob.token) });
+    await api(`/api/quickproof/${id}/identity`, {});
+    const observed = await api(`/api/quickproof/${id}/observe`, { create: 'POST /api/v1/notes\n\n{"text":"x"}', vulnerable: 'GET /api/v1/notes/7a1f3c2e-1b2c-4d5e-8f90-112233445566' });
+    expect(observed.status).toBe(422);
+    expect(observed.json.error).toMatch(/observation object was deleted/);
+    expect(lab.noteCount()).toBe(0);
+    expect(lab.seen().some(r => r.startsWith('DELETE /api/v1/notes/'))).toBe(true);
+  });
+});
