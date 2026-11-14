@@ -5,7 +5,7 @@ import { api } from './api.ts';
 import type { Lang } from './i18n.ts';
 
 type Actor = 'owner' | 'researcher';
-type AuthKind = 'header' | 'token' | 'cookie';
+type AuthKind = 'browser' | 'header' | 'token' | 'cookie';
 interface Status { id: string; origin: string; owner: null | { connected: boolean; identity?: Record<string, unknown>; error?: string }; researcher: Status['owner']; identity: null | { path: string; idPointer: string; tenantPointer?: string; sameTenant: boolean } }
 interface IdentityResult { found: boolean; tried: { path: string; owner: number; researcher: number }[]; message?: string; identity?: { path: string; idPointer: string; tenantPointer?: string; sameTenant: boolean; fields: { pointer: string; a: unknown; b?: unknown }[] } }
 interface Observed { case: CaseSpec; notes: string[]; learned: { identity: { path: string; idPointer: string; tenantPointer?: string }; objectPath: string; idField: string; ownerField?: string; ownerSource?: string; markerField: string; csrf: null | { path: string; header: string }; boundary: string }; preview: { owner: number; other: number; otherSawObject: boolean } }
@@ -21,18 +21,25 @@ export function QuickProof({ lang, initialVulnerable = '', created }: { lang: La
   const [auth, setAuth] = useState<Record<Actor, { kind: AuthKind; name: string; value: string }>>({ owner: { kind: 'header', name: 'Authorization', value: '' }, researcher: { kind: 'header', name: 'Authorization', value: '' } });
   const [identity, setIdentity] = useState<IdentityResult | null>(null), [customPath, setCustomPath] = useState('');
   const [createReq, setCreateReq] = useState(''), [vulnReq, setVulnReq] = useState(initialVulnerable), [observed, setObserved] = useState<Observed | null>(null);
+  const [opened, setOpened] = useState<Record<Actor, boolean>>({ owner: false, researcher: false });
   const run = async (name: string, fn: () => Promise<void>) => { setBusy(name); setError(''); try { await fn(); } catch (e) { setError((e as Error).message); } finally { setBusy(''); } };
 
   const connect = () => run('connect', async () => {
     let s = session;
     if (!s || s.origin !== new URL(origin.trim()).origin) s = await api<Status>('/api/quickproof', { origin: origin.trim() });
+    const needsLogin: Actor[] = [];
     for (const actor of ['owner', 'researcher'] as const) {
       const a = auth[actor];
+      if (a.kind === 'browser') {
+        if (!opened[actor] || s!.id !== session?.id) { s = await api<Status>(`/api/quickproof/${s!.id}/browser`, { actor }); setOpened(old => ({ ...old, [actor]: true })); needsLogin.push(actor); }
+        continue;
+      }
       if (!a.value.trim()) throw new Error(actor === 'owner' ? t('Add the first account’s credential.', 'Birinci hesabın bilgisini ekle.') : t('Add the second account’s credential.', 'İkinci hesabın bilgisini ekle.'));
       const body = a.kind === 'cookie' ? { cookie: a.value.trim() } : a.kind === 'token' ? { token: a.value.trim().replace(/^Bearer\s+/i, '') } : { header: { name: a.name.trim(), value: a.value.trim() } };
       s = await api<Status>(`/api/quickproof/${s!.id}/connect`, { actor, ...body });
     }
     setSession(s);
+    if (needsLogin.length) throw new Error(t('A browser window opened for each “Sign in” account. Sign in there with the test account, then press “Connect & identify” again.', '“Giriş yap” seçilen her hesap için bir tarayıcı penceresi açıldı. Orada test hesabıyla giriş yap, sonra “Bağla ve tanı”ya tekrar bas.'));
     const found = await api<IdentityResult>(`/api/quickproof/${s!.id}/identity`, {});
     setIdentity(found);
     if (found.found) setPage(1);
@@ -48,9 +55,10 @@ export function QuickProof({ lang, initialVulnerable = '', created }: { lang: La
   const credential = (actor: Actor, label: string) => {
     const a = auth[actor], set = (patch: Partial<typeof a>) => setAuth(old => ({ ...old, [actor]: { ...old[actor], ...patch } }));
     return <fieldset className="qp-account"><legend>{label}</legend>
-      <div className="segmented small">{(['header', 'token', 'cookie'] as const).map(k => <button key={k} type="button" className={a.kind === k ? 'active' : ''} onClick={() => set({ kind: k })}>{k === 'header' ? t('Header', 'Başlık') : k === 'token' ? 'Bearer' : 'Cookie'}</button>)}</div>
+      <div className="segmented small">{(['browser', 'header', 'token', 'cookie'] as const).map(k => <button key={k} type="button" className={a.kind === k ? 'active' : ''} onClick={() => set({ kind: k })}>{k === 'browser' ? t('Sign in', 'Giriş yap') : k === 'header' ? t('Header', 'Başlık') : k === 'token' ? 'Bearer' : 'Cookie'}</button>)}</div>
+      {a.kind === 'browser' && <small className="field-hint">{opened[actor] ? t('Window opened. Sign in there, then continue.', 'Pencere açıldı. Orada giriş yap, sonra devam et.') : t('ReproCase opens a separate browser window where you sign in normally. Nothing to copy.', 'ReproCase ayrı bir tarayıcı penceresi açar, normal şekilde giriş yaparsın. Kopyalamak gerekmez.')}</small>}
       {a.kind === 'header' && <input aria-label={`${label} header name`} value={a.name} onChange={e => set({ name: e.target.value })} placeholder="Authorization" spellCheck={false} />}
-      <input aria-label={`${label} credential`} type="password" value={a.value} onChange={e => set({ value: e.target.value })} placeholder={a.kind === 'cookie' ? 'session=…' : a.kind === 'token' ? 'eyJhbGciOi…' : 'Bearer eyJ… / Token …'} spellCheck={false} autoComplete="off" />
+      {a.kind !== 'browser' && <input aria-label={`${label} credential`} type="password" value={a.value} onChange={e => set({ value: e.target.value })} placeholder={a.kind === 'cookie' ? 'session=…' : a.kind === 'token' ? 'eyJhbGciOi…' : 'Bearer eyJ… / Token …'} spellCheck={false} autoComplete="off" />}
     </fieldset>;
   };
 
@@ -64,7 +72,7 @@ export function QuickProof({ lang, initialVulnerable = '', created }: { lang: La
         <label>{t('Target API', 'Hedef API')}<input aria-label="Target API" value={origin} onChange={e => setOrigin(e.target.value)} placeholder="https://api.example.com" spellCheck={false} /></label>
         <div className="qp-accounts">{credential('owner', t('Account A · owns the object', 'Hesap A · nesnenin sahibi'))}{credential('researcher', t('Account B · tries to access it', 'Hesap B · erişmeyi dener'))}</div>
         <div className="redaction-info"><ShieldCheck size={15} />{t('Next, ReproCase sends a few GET requests (such as /me or /api/v1/profile) with both accounts to find who they are. Scope and rate limits apply.', 'Sonraki adımda ReproCase, hesapların kim olduğunu bulmak için iki hesapla birkaç GET isteği gönderir (/me, /api/v1/profile gibi). Kapsam ve hız sınırları uygulanır.')}</div>
-        {identity && !identity.found && <div className="qp-miss"><p className="help-text">{identity.message}</p><div className="qp-inline"><input aria-label="Identity path" value={customPath} onChange={e => setCustomPath(e.target.value)} placeholder="/api/v2/account" spellCheck={false} /><button className="button secondary" disabled={!customPath.trim() || !!busy} onClick={() => detect({ path: customPath.trim() })}><Search size={14} />{t('Try this path', 'Bu yolu dene')}</button></div></div>}
+        {identity && !identity.found && <div className="qp-miss"><p className="help-text">{identity.message}</p>{identity.tried.length > 0 && <table className="qp-fields"><thead><tr><th>{t('Tried', 'Denenen')}</th><th>A</th><th>B</th></tr></thead><tbody>{identity.tried.map(row => <tr key={row.path}><td className="mono">GET {row.path}</td><td className="mono">{row.owner}</td><td className="mono">{row.researcher}</td></tr>)}</tbody></table>}{identity.tried.some(row => row.owner === 401 || row.researcher === 401) && <p className="help-text">{t('HTTP 401 means the session was not accepted: check that the credential is current and sent in the right header.', 'HTTP 401, oturumun kabul edilmediği anlamına gelir: bilginin güncel olduğunu ve doğru başlıkla gönderildiğini kontrol et.')}</p>}<div className="qp-inline"><input aria-label="Identity path" value={customPath} onChange={e => setCustomPath(e.target.value)} placeholder="/api/v2/account" spellCheck={false} /><button className="button secondary" disabled={!customPath.trim() || !!busy} onClick={() => detect({ path: customPath.trim() })}><Search size={14} />{t('Try this path', 'Bu yolu dene')}</button></div></div>}
       </>}
 
       {page === 1 && identity?.identity && <>

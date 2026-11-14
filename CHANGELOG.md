@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- **Easier to read.** Small interface text is larger throughout (labels, badges, step lists, chat), with the same layout on desktop and mobile.
+- **"Next step" guide** on every case: shows the first unfinished step (acknowledge the policy, enter the target, connect accounts, approve and run) with a short hint.
+- **Import dialog** groups its tabs into *Evidence* (HAR, raw HTTP, Burp, Postman, package) and *IDOR leads* (Arjun, ffuf).
+- **Quick proof: Sign in** option. ReproCase opens a separate browser window where you sign in normally, with nothing to copy. When no identity endpoint is found, the wizard lists every path it tried with each account's status and explains a 401.
+
 ## 1.1.0-beta.4
 
 - **Quick proof.** A four-step wizard that turns two test accounts and two pasted requests into a case. It finds the identity endpoint and fields by comparing both accounts. From one observed creation it learns the new object's ID, owner and a marker field, detects CSRF tokens, previews the other account's access, cleans up and saves an unacknowledged case. Corrections are made by picking fields; no JSON Pointers. It is the primary action on the start screen and on IDOR candidates. API: `/api/quickproof/*`.

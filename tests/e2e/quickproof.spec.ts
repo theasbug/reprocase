@@ -95,3 +95,26 @@ test('Triager: import a reporter’s package and verify it on my own site withou
     await lab.close();
   }
 });
+
+test('Quick Proof explains a rejected session instead of failing silently', async ({ page }) => {
+  process.env.REPROCASE_HEADLESS = '1';
+  const lab = await startAltApi('vulnerable');
+  const server = await createServer({ memory: true, port: 0 });
+  try {
+    await page.goto(server.url);
+    await page.getByTestId('quick-proof').click();
+    const dialog = page.locator('.modal');
+    await dialog.getByLabel('Target API').fill(lab.origin);
+    await dialog.getByRole('button', { name: 'Header', exact: true }).first().click();
+    await dialog.getByRole('button', { name: 'Header', exact: true }).nth(1).click();
+    // Wrong header name: the lab expects X-Auth-Token.
+    await dialog.getByLabel('Account A · owns the object credential').fill(lab.users.alice.token);
+    await dialog.getByLabel('Account B · tries to access it credential').fill(lab.users.bob.token);
+    await dialog.getByTestId('qp-connect').click();
+    await expect(dialog.getByText('GET /api/v1/profile')).toBeVisible();
+    await expect(dialog.getByText('HTTP 401 means the session was not accepted')).toBeVisible();
+  } finally {
+    await server.close();
+    await lab.close();
+  }
+});
