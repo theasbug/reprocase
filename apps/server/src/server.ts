@@ -79,13 +79,21 @@ export async function createServer(options: { workspace?: string; port?: number;
     if (body.case.id !== request.params.id) throw new Error('Case identifier does not match the route');
     return service.saveCase(body.case, body.expectedRevision);
   });
+  // Operations that send requests to a target run one at a time per case or Quick Proof session.
+  // A second call while one is running is rejected instead of multiplying outbound traffic.
+  const running = new Set<string>();
+  const exclusive = async <T>(key: string, reply: { code(status: number): unknown }, fn: () => Promise<T>) => {
+    if (running.has(key)) { reply.code(429); return { error: 'Another verification is already running for this case. Wait for it to finish.' }; }
+    running.add(key);
+    try { return await fn(); } finally { running.delete(key); }
+  };
   app.post('/api/quickproof', request => service.quickproof.start(z.strictObject({ origin: z.string().min(1) }).parse(request.body).origin));
   app.get<{ Params: { id: string } }>('/api/quickproof/:id', request => service.quickproof.status(request.params.id));
   app.post<{ Params: { id: string } }>('/api/quickproof/:id/connect', request => service.quickproof.connect(request.params.id, qpConnectSchema.parse(request.body)));
   app.post<{ Params: { id: string } }>('/api/quickproof/:id/browser', request => service.quickproof.openBrowser(request.params.id, z.strictObject({ actor: z.enum(['owner', 'researcher']) }).parse(request.body).actor));
-  app.post<{ Params: { id: string } }>('/api/quickproof/:id/identity', request => service.quickproof.detectIdentity(request.params.id, qpIdentitySchema.parse(request.body ?? {})));
-  app.post<{ Params: { id: string } }>('/api/quickproof/:id/observe', request => service.quickproof.observe(request.params.id, qpObserveSchema.parse(request.body)));
-  app.post<{ Params: { id: string } }>('/api/cases/:id/verify-on-site', request => service.verifyOnSite(request.params.id, verifySiteSchema.parse(request.body)));
+  app.post<{ Params: { id: string } }>('/api/quickproof/:id/identity', (request, reply) => exclusive(`qp:${request.params.id}`, reply, () => service.quickproof.detectIdentity(request.params.id, qpIdentitySchema.parse(request.body ?? {}))));
+  app.post<{ Params: { id: string } }>('/api/quickproof/:id/observe', (request, reply) => exclusive(`qp:${request.params.id}`, reply, () => service.quickproof.observe(request.params.id, qpObserveSchema.parse(request.body))));
+  app.post<{ Params: { id: string } }>('/api/cases/:id/verify-on-site', (request, reply) => exclusive(`case:${request.params.id}`, reply, () => service.verifyOnSite(request.params.id, verifySiteSchema.parse(request.body))));
   app.post('/api/candidates', request => { const body = z.strictObject({ kind: z.enum(['arjun', 'ffuf']), data: z.string() }).parse(request.body); return parseCandidates(body.kind, body.data); });
   app.post('/api/import', request => { const body = z.strictObject({ kind: z.enum(['har', 'http', 'package', 'burp', 'postman']), data: z.string() }).parse(request.body); return service.import(body.kind, body.data); });
   app.post<{ Params: { id: string } }>('/api/cases/:id/traffic/draft', request => service.draftFromLiveTraffic(request.params.id));

@@ -106,3 +106,16 @@ describe('Triager: verify an imported package on my own site', () => {
     expect(result.verdict, result.reason).toBe('reproduced');
   });
 });
+
+describe('Outbound work is not multiplied by concurrent calls', () => {
+  it('rejects a second identity detection for the same session while one is running', async () => {
+    lab = await startAltApi('vulnerable');
+    server = await createServer({ memory: true, port: 0 });
+    const id = (await api('/api/quickproof', { origin: lab.origin })).json.id;
+    await api(`/api/quickproof/${id}/connect`, { actor: 'owner', header: { name: 'X-Auth-Token', value: lab.users.alice.token } });
+    await api(`/api/quickproof/${id}/connect`, { actor: 'researcher', header: { name: 'X-Auth-Token', value: lab.users.bob.token } });
+    const [first, second] = await Promise.all([api(`/api/quickproof/${id}/identity`, {}), api(`/api/quickproof/${id}/identity`, {})]);
+    expect([first.status, second.status].sort()).toEqual([200, 429]);
+    expect((await api(`/api/quickproof/${id}/identity`, {})).status).toBe(200);
+  });
+});
