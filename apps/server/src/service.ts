@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { platform } from 'node:os';
 import { BrowserManager, type DirectConnection, type BrowserAction } from '@reprocase/browser';
 import { AIManager } from '@reprocase/ai';
+import { QuickProof } from './quickproof.ts';
 import {
   analyzeJsBundle,
   analyzeJwtToken,
@@ -80,6 +81,13 @@ export class ReproService {
   private programHeaders=new Map<string,Record<string,string>>();
   private scanLimiters=new Map<string,RequestLimiter>();
   private extraSecrets: string[] = [];
+  /** Guided "Quick Proof" sessions: infer a case from two bound accounts and observed requests. */
+  readonly quickproof = new QuickProof({
+    browsers: this.browsers,
+    network: signal => new ScanNetwork(fetch, { ...this.scanOptions(undefined, signal), maxRequests: 80 }),
+    saveCase: spec => this.store.saveCase(spec),
+    saveTargets: (caseId, targets) => { const all = this.store.setting<Record<string, Record<string, string>>>('targets', {}); all[caseId] = targets; this.store.setSetting('targets', all); },
+  });
 
   constructor(
     readonly store: Store,

@@ -18,12 +18,12 @@ const escape = (key: string) => key.replace(/~/g, '~0').replace(/\//g, '~1');
 const SECRET_KEY = /(?:pass(?:word)?|secret|token|api[_-]?key|session|cookie|authorization|credential|private)/i;
 
 /** Lists scalar fields with JSON Pointers. Bounded depth and count; secret-named fields are skipped. */
-export function scalarFields(body: unknown, maxDepth = 5, limit = 400): FieldValue[] {
+export function scalarFields(body: unknown, maxDepth = 5, limit = 400, includeSecretKeys = false): FieldValue[] {
   const out: FieldValue[] = [];
   const walk = (value: unknown, pointer: string, key: string, depth: number) => {
     if (out.length >= limit || depth > maxDepth) return;
     if (typeof value === 'string' || (typeof value === 'number' && Number.isFinite(value))) {
-      if (!SECRET_KEY.test(key) && String(value).length <= 300) out.push({ pointer, key, value });
+      if ((includeSecretKeys || !SECRET_KEY.test(key)) && String(value).length <= 300) out.push({ pointer, key, value });
     } else if (isObject(value)) for (const [k, v] of Object.entries(value)) walk(v, `${pointer}/${escape(k)}`, k, depth + 1);
     else if (Array.isArray(value)) value.slice(0, 5).forEach((v, i) => walk(v, `${pointer}/${i}`, key, depth + 1));
   };
@@ -176,4 +176,42 @@ export function buildQuickProof(input: QuickProofInput, caseId?: string) {
     deniedStatuses: input.deniedStatuses ?? [401, 403, 404],
   };
   return { authoring, ...buildCase(authoring, caseId) };
+}
+
+export interface ParsedRequest { method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; path: string; body?: Record<string, unknown>; contentType?: 'json' | 'form' }
+
+/**
+ * Reads a pasted request: a raw HTTP request (Burp "Copy to file", DevTools) or a single
+ * "METHOD URL" line. Only the method, path and body are kept; headers (including cookies and
+ * tokens) are ignored because the bound accounts provide authentication.
+ */
+export function parseRequest(text: string): ParsedRequest {
+  const normalized = text.replace(/\r\n/g, '\n').trim();
+  const split = normalized.indexOf('\n\n');
+  const head = split === -1 ? normalized : normalized.slice(0, split);
+  const rawBody = split === -1 ? '' : normalized.slice(split + 2).trim();
+  const first = /^([A-Za-z]+)\s+(\S+)(?:\s+HTTP\/\d(?:\.\d)?)?$/.exec(head.split('\n')[0]!.trim());
+  if (!first) throw new Error('Paste a request like "GET /api/orders/123 HTTP/1.1" or "GET https://host/api/orders/123".');
+  const method = first[1]!.toUpperCase();
+  if (!['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) throw new Error(`Unsupported method ${method}.`);
+  let path = first[2]!;
+  if (/^https?:\/\//i.test(path)) { const u = new URL(path); path = u.pathname + u.search; }
+  if (!path.startsWith('/')) throw new Error('The request target must be a path or an absolute URL.');
+  path = path.split('?')[0]!;
+  if (!rawBody) return { method: method as ParsedRequest['method'], path };
+  try {
+    const parsed = JSON.parse(rawBody);
+    if (!isObject(parsed)) throw new Error('not an object');
+    return { method: method as ParsedRequest['method'], path, body: parsed, contentType: 'json' };
+  } catch {
+    if (/^[^=\s&]+=[^&\n]*(?:&[^=\s&]+=[^&\n]*)*$/.test(rawBody)) return { method: method as ParsedRequest['method'], path, body: Object.fromEntries(new URLSearchParams(rawBody)), contentType: 'form' };
+    throw new Error('The request body must be a JSON object or form fields.');
+  }
+}
+
+/** Common CSRF token endpoints, tried as the owner only when a creation is rejected for CSRF. */
+export const CSRF_PATHS = ['/csrf', '/api/csrf', '/api/v1/csrf', '/csrf-token', '/api/csrf-token', '/api/v1/csrf-token', '/auth/csrf'] as const;
+/** Returns the pointer of a CSRF-looking token field in a response. */
+export function findCsrfPointer(body: unknown): string | undefined {
+  return scalarFields(body, 3, 100, true).find(f => /^(?:csrf|xsrf|_csrf|csrf[_-]?token|xsrf[_-]?token|token)$/i.test(f.key) && typeof f.value === 'string' && f.value.length >= 8)?.pointer;
 }

@@ -10,6 +10,7 @@ import { authoringSchema, calculateCvss31, parseCandidates, caseSchema, provider
 import type { SecretVault } from '../../../packages/ai/src/providers.ts';
 import { Store } from './store.ts';
 import { ReproService } from './service.ts';
+import { connectSchema as qpConnectSchema, identitySchema as qpIdentitySchema, observeSchema as qpObserveSchema } from './quickproof.ts';
 import { acquireWorkspace } from './runtime.ts';
 
 const projectRoot = process.env.REPROCASE_APP_ROOT ?? fileURLToPath(new URL('../../../', import.meta.url));
@@ -78,6 +79,12 @@ export async function createServer(options: { workspace?: string; port?: number;
     if (body.case.id !== request.params.id) throw new Error('Case identifier does not match the route');
     return service.saveCase(body.case, body.expectedRevision);
   });
+  app.post('/api/quickproof', request => service.quickproof.start(z.strictObject({ origin: z.string().min(1) }).parse(request.body).origin));
+  app.get<{ Params: { id: string } }>('/api/quickproof/:id', request => service.quickproof.status(request.params.id));
+  app.post<{ Params: { id: string } }>('/api/quickproof/:id/connect', request => service.quickproof.connect(request.params.id, qpConnectSchema.parse(request.body)));
+  app.post<{ Params: { id: string } }>('/api/quickproof/:id/browser', request => service.quickproof.openBrowser(request.params.id, z.strictObject({ actor: z.enum(['owner', 'researcher']) }).parse(request.body).actor));
+  app.post<{ Params: { id: string } }>('/api/quickproof/:id/identity', request => service.quickproof.detectIdentity(request.params.id, qpIdentitySchema.parse(request.body ?? {})));
+  app.post<{ Params: { id: string } }>('/api/quickproof/:id/observe', request => service.quickproof.observe(request.params.id, qpObserveSchema.parse(request.body)));
   app.post('/api/candidates', request => { const body = z.strictObject({ kind: z.enum(['arjun', 'ffuf']), data: z.string() }).parse(request.body); return parseCandidates(body.kind, body.data); });
   app.post('/api/import', request => { const body = z.strictObject({ kind: z.enum(['har', 'http', 'package', 'burp', 'postman']), data: z.string() }).parse(request.body); return service.import(body.kind, body.data); });
   app.post<{ Params: { id: string } }>('/api/cases/:id/traffic/draft', request => service.draftFromLiveTraffic(request.params.id));
