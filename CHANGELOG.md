@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## 1.1.0-beta.3
 
 - **IDOR candidates from Arjun and ffuf.** Import evidence has new **Arjun** (`-oJ`) and **ffuf** (`-of json`) tabs. The output is ranked offline by identifier signals: ID-like parameter names, object IDs in paths, and fuzzed IDs that returned 2xx. Each lead becomes a case draft with one click. Also available as `cli candidates FILE [--draft N]` and the MCP tool `idor_candidates`. Captured cookies and tokens are never copied.
 - GitHub Actions updated (upload-artifact v7, attest-build-provenance v4, setup-java v6, docker/login-action v4). Dependabot opens only minor/patch npm updates.
+- Dependencies: electron 45.3.0, lucide-react 0.577, actions/setup-node v7.
 
 ## 1.1.0-beta.2
 
