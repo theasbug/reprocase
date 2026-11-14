@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0-beta.4
 
 - **Quick proof.** A four-step wizard that turns two test accounts and two pasted requests into a case. It finds the identity endpoint and fields by comparing both accounts. From one observed creation it learns the new object's ID, owner and a marker field, detects CSRF tokens, previews the other account's access, cleans up and saves an unacknowledged case. Corrections are made by picking fields; no JSON Pointers. It is the primary action on the start screen and on IDOR candidates. API: `/api/quickproof/*`.
 - **Verify on my site** for triagers. An imported package binds every account to one origin with a header, token or cookie. If the identity endpoint differs, it is detected and saved as a new revision. API: `/api/cases/:id/verify-on-site`.

@@ -157,7 +157,7 @@ describe('optional AI adapters', () => {
     expect(headers).toHaveLength(2);
     expect(headers[0].get('x-opencode-session')).toMatch(/^[0-9a-f-]{36}$/);
     expect(headers[1].get('x-opencode-session')).toBe(headers[0].get('x-opencode-session'));
-    expect(headers.every(h => h.get('user-agent') === 'reprocase/1.1.0-beta.3')).toBe(true);
+    expect(headers.every(h => h.get('user-agent') === 'reprocase/1.1.0-beta.4')).toBe(true);
     expect(ai.publicSettings()).not.toHaveProperty('apiKey');
   });
   it('tests required tool support, creates a new conversation per test, and keeps the existing key only for the same endpoint', async () => {
