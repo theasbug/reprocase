@@ -8,7 +8,14 @@ import { exportPackage } from './export.ts';
  * case, with the user's own test accounts and the normal scope, approval and run checks.
  * Templates never choose or discover targets.
  */
-const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'template';
+const slug = (value: string) => {
+  // Bounded input and a plain loop instead of an anchored regex, so long names cannot slow this down.
+  const text = value.slice(0, 200).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  let start = 0, end = text.length;
+  while (start < end && text[start] === '-') start++;
+  while (end > start && text[end - 1] === '-') end--;
+  return text.slice(start, end).slice(0, 40) || 'template';
+};
 const randomSuffix = () => globalThis.crypto.randomUUID().slice(0, 8);
 
 export const templateMetaSchema = z.strictObject({
