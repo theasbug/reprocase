@@ -201,3 +201,11 @@ Asıl taşınabilir kanıt .reprocase.json paketidir. Alıcı kendi hesapların�
 Playwright export dosyasını ReproCase kaynak kurulumundaki tests/e2e klasörüne koy. npm ci sonrasında REPROCASE_APPROVE_REVISION değerini incelenen vaka sürümüne ayarla; test hesabı token/cookie değerlerini ortam değişkenlerinden ver. Dosyanın başındaki açıklama ve docs/EXPORTS.md ayrıntıları gösterir. Varsayılan beklenen sonuç reproduced; güvenli sürüm için REPROCASE_EXPECT_VERDICT=not_reproduced seç.
 
 Bütün cevapların 403 olması tek başına başarılı test değildir. Kimlik veya hazırlık eksikse test hata verir. Hurl çıktısı ise yalnız HTTP istek taslağıdır; güvenlik doğrulaması içermez. Hurl yeşil çıkışını kanıt sayma.
+
+## 24. Şablonlar: kanıtlanmış bir vakayı başka bir hedefte kullan
+
+Bir vakayı kanıtladıktan sonra üstteki **Şablon olarak kaydet** ile sakla. Şablona yalnız vakanın mantığı kaydedilir: hesaplar, hedef adresleri, cookie, token ve çalışma kanıtları dışarıda kalır.
+
+Başka bir hedefte kullanmak için **Şablonlar → Bir hedefte kullan** yolunu izle. Hedef adresini sen yazarsın; ReproCase hedef seçmez, önermez ve aramaz. Yeni hedefin API'si farklı yollar kullanıyorsa yolları burada eşle; `{yer tutucular}` aynı kalmalı. Oluşan vaka onaysızdır ve hesap bağlı değildir. Erişim kuralını incele, o hedefte açtığın iki test hesabını bağla (ör. **Kendi sitemde doğrula**), sonra onaylayıp çalıştır.
+
+Kayıtlı bir program varsa hedef, vaka oluşturulurken kapsamına göre kontrol edilir; kapsam dışındaysa vaka oluşturulmaz. Çalışmadaki her istek ayrıca yeniden kontrol edilir. Yalnızca test etme iznin olan hedefleri kullan. Şablonları JSON olarak indirip paylaşabilir, içe aktarabilirsin.

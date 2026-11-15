@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0-beta.1
+
+- **Case templates.** Save a proven case as a template (**Save as template**) and reuse it later on another target you are allowed to test (**Templates → Use on a target**).
+  - You type the target yourself. ReproCase never picks, suggests or searches for targets, and a template case covers one target.
+  - A template keeps the case logic only: accounts, target addresses, cookies, tokens and run evidence are removed, the same way as an export.
+  - If the new target's API uses different paths, map them before creating the case. `{placeholders}` must stay the same, and a path can't point to another host.
+  - The new case starts unapproved and with no accounts connected. If a program is saved, the target is checked against its scope when the case is created, and every request of the run is checked again as before.
+- The files in `templates/` now appear as built-in templates in the app. Templates can be downloaded and imported as JSON, and a ReproCase package can be imported as a template (its evidence is dropped).
+
 ## 1.2.0-beta.1
 
 - Quick proof controlled writes: five-input learning, a separate authorized control, fresh resource binding in paths/queries/bodies, JSON/form encoding, and independent owner before/after evidence.

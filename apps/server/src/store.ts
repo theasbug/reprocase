@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { bountyFindingSchema, bountyProgramSchema, caseSchema, type BountyFinding, type BountyProgram, type CaseSpec, type RunResult, type ChatSession } from '@reprocase/core';
+import { bountyFindingSchema, bountyProgramSchema, caseSchema, templateSchema, type CaseTemplate, type BountyFinding, type BountyProgram, type CaseSpec, type RunResult, type ChatSession } from '@reprocase/core';
 
 export class Store {
   private db: DatabaseSync;
@@ -15,7 +15,8 @@ export class Store {
       CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS chats(id TEXT PRIMARY KEY, updated_at TEXT NOT NULL, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS bounty_programs(id TEXT PRIMARY KEY, updated_at TEXT NOT NULL, data TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS bounty_findings(id TEXT PRIMARY KEY, updated_at TEXT NOT NULL, data TEXT NOT NULL);`);
+      CREATE TABLE IF NOT EXISTS bounty_findings(id TEXT PRIMARY KEY, updated_at TEXT NOT NULL, data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS templates(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, data TEXT NOT NULL);`);
   }
   /** Only call after exclusively acquiring this workspace; read-only connections must not recover live runs. */
   recoverInterruptedRuns() { for (const run of this.runs()) if (run.state === 'running') this.saveRun({ ...run, state: 'completed', verdict: 'inconclusive', code: 'process_interrupted', reason: 'The process stopped during execution. No write was automatically retried.', finishedAt: new Date().toISOString() }); }
@@ -63,5 +64,13 @@ export class Store {
     return parsed;
   }
   deleteFinding(id: string) { this.db.prepare('DELETE FROM bounty_findings WHERE id=?').run(id); }
+  templates(): CaseTemplate[] { return (this.db.prepare('SELECT data FROM templates ORDER BY created_at DESC LIMIT 500').all() as any[]).map(row => templateSchema.parse(JSON.parse(row.data))); }
+  getTemplate(id: string): CaseTemplate | undefined { const row = this.db.prepare('SELECT data FROM templates WHERE id=?').get(id) as any; return row ? templateSchema.parse(JSON.parse(row.data)) : undefined; }
+  saveTemplate(input: CaseTemplate): CaseTemplate {
+    const parsed = templateSchema.parse(input);
+    this.db.prepare('INSERT INTO templates(id,created_at,data) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').run(parsed.id, parsed.createdAt, JSON.stringify(parsed));
+    return parsed;
+  }
+  deleteTemplate(id: string) { this.db.prepare('DELETE FROM templates WHERE id=?').run(id); }
   close() { this.db.close(); }
 }
