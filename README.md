@@ -124,7 +124,7 @@ Open the local URL printed by the command. On Linux, first run `npx playwright i
 
 <sub>Simplified. See the full executable [example](examples/cross-tenant.reprocase.json) and the [case format](docs/CASE-FORMAT.md).</sub>
 
-Start from a template in [`templates/`](templates/): horizontal IDOR (read and write) and vertical privilege escalation. Cross-tenant read and write cases are in [`examples/`](examples/). Import a HAR, raw HTTP, Burp XML or Postman capture to draft a case from your own traffic.
+**Reuse a proven case.** Save any case as a template, then open **Templates → Use on a target**, type another target you're allowed to test, map paths if its API differs, connect your own test accounts and run. Built-in templates from [`templates/`](templates/) cover horizontal IDOR (read and write), vertical privilege escalation, role and CORS reads. Cross-tenant read and write cases are in [`examples/`](examples/). Import a HAR, raw HTTP, Burp XML or Postman capture to draft a case from your own traffic.
 
 ### From Burp Suite in one click
 

@@ -6,7 +6,7 @@ import { platform } from 'node:os';
 import { BrowserManager, type DirectConnection, type BrowserAction } from '@reprocase/browser';
 import { AIManager } from '@reprocase/ai';
 import { QuickProof, directInput, type verifySiteSchema } from './quickproof.ts';
-import { IDENTITY_PATHS, inferIdentity } from '@reprocase/core';
+import { IDENTITY_PATHS, inferIdentity, makeTemplate, parseTemplateFile, templateSlots, applyTemplate, templateMetaSchema, applyTemplateSchema, type CaseTemplate } from '@reprocase/core';
 import type { z as zod } from 'zod';
 import {
   analyzeJsBundle,
@@ -99,6 +99,7 @@ export class ReproService {
       desktop?: boolean;
       dataRoot?: string;
       prompt?: string;
+      builtinTemplates?: CaseTemplate[];
       computer?: {
         tools(): AgentTool[];
         execute(name: string, input: unknown, signal: AbortSignal): Promise<AgentToolOutput>;
@@ -106,6 +107,7 @@ export class ReproService {
       };
     } = {},
   ) {
+    this.builtinTemplates = options.builtinTemplates ?? [];
     this.ai = new AIManager({ fetch: options.providerFetch });
     this.providers = new ProviderRegistry({ vault: options.vault, fetch: options.providerFetch, save: profiles => store.setSetting('providers', profiles) });
     this.mcp = new McpManager({ desktop: !!options.desktop, vault: options.vault, save: records => store.setSetting('mcpServers', records) });
@@ -414,6 +416,56 @@ export class ReproService {
         updatedAt: new Date().toISOString(),
       }),
     );
+  }
+  private readonly builtinTemplates: CaseTemplate[];
+  /** Built-in templates ship with the app and are read-only; saved ones live in this workspace. */
+  templates() {
+    const mine = this.store.templates();
+    return [...mine.map(t => ({ ...t, builtIn: false })), ...this.builtinTemplates.filter(t => !mine.some(m => m.id === t.id)).map(t => ({ ...t, builtIn: true }))]
+      .map(t => ({ ...t, slots: templateSlots(t.case) }));
+  }
+  private template(id: string) {
+    const found = this.store.getTemplate(id) ?? this.builtinTemplates.find(t => t.id === id);
+    if (!found) throw Object.assign(new Error('Unknown template'), { statusCode: 404 });
+    return found;
+  }
+  createTemplate(caseId: string, meta: zod.input<typeof templateMetaSchema>) {
+    return this.store.saveTemplate(makeTemplate(this.getCase(caseId), meta, this.knownSecrets()));
+  }
+  importTemplate(text: string) {
+    const parsed = parseTemplateFile(text);
+    const taken = !!this.store.getTemplate(parsed.id) || this.builtinTemplates.some(t => t.id === parsed.id);
+    return this.store.saveTemplate(taken ? { ...parsed, id: `${parsed.id.slice(0, 54)}-${randomUUID().slice(0, 8)}` } : parsed);
+  }
+  exportTemplate(id: string) { return this.template(id); }
+  deleteTemplate(id: string) {
+    if (!this.store.getTemplate(id)) throw Object.assign(new Error(this.builtinTemplates.some(t => t.id === id) ? 'Built-in templates cannot be deleted.' : 'Unknown template'), { statusCode: 400 });
+    this.store.deleteTemplate(id);
+    return { ok: true };
+  }
+  /**
+   * Creates a case from a template for one target the user typed. The target is checked against the
+   * saved program scope here; every request of the later run is checked again by the run's network policy.
+   */
+  useTemplate(id: string, input: { targets: Record<string, string> } & zod.input<typeof applyTemplateSchema>) {
+    const template = this.template(id);
+    const spec = applyTemplate(template, { title: input.title, paths: input.paths });
+    const targets: Record<string, string> = {};
+    for (const origin of spec.origins) {
+      const raw = input.targets[origin.id]?.trim();
+      if (!raw) throw Object.assign(new Error(`Enter the target address for ${origin.label}.`), { statusCode: 422 });
+      targets[origin.id] = targetOrigin(raw);
+    }
+    const program = this.getProgramForScan();
+    if (program) for (const target of Object.values(targets)) {
+      const scope = checkScope(target, program);
+      if (!scope.allowed) throw Object.assign(new Error(`${target} is outside the saved program scope: ${scope.reason}`), { statusCode: 422 });
+    }
+    const saved = this.store.saveCase(this.store.getCase(spec.id) ? { ...spec, id: `${spec.id.slice(0, 50)}-${randomUUID().slice(0, 6)}` } : spec);
+    const all = this.store.setting<Record<string, Record<string, string>>>('targets', {});
+    all[saved.id] = targets;
+    this.store.setSetting('targets', all);
+    return { case: saved, targets, scopeChecked: !!program };
   }
   deleteFinding(id: string) {
     this.store.deleteFinding(id);

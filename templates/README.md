@@ -1,6 +1,8 @@
 # Case templates
 
-Starting points for common authorization bugs. Each file is a complete, schema-valid `.reprocase.json` package. Copy one, then adjust it to your target:
+Starting points for common authorization bugs. Every file here also appears in the app under **Templates** as a built-in template: choose **Use on a target**, type a target you're allowed to test, map paths if its API differs, then connect your own test accounts. You can save your own cases as templates with **Save as template**, and download or import them as JSON.
+
+To edit a file by hand instead, copy one and adjust it to your target:
 
 1. Change the `path` values and JSON Pointers (`idPointer`, `tenantPointer`, `rolePointer`, captures) to match the target's API.
 2. Rewrite `policy.statement` so it describes the access rule the program actually documents.

@@ -201,3 +201,11 @@ The primary portable proof is .reprocase.json. The recipient binds their own acc
 Place a Playwright export under tests/e2e in a ReproCase source checkout. After npm ci, set REPROCASE_APPROVE_REVISION to the reviewed revision and provide account token/cookie environment variables. The file header and docs/EXPORTS.md explain the details. Expected verdict defaults to reproduced; set REPROCASE_EXPECT_VERDICT=not_reproduced for a secure application.
 
 All responses being 403 is not a successful proof test. Missing identity or setup fails the test. Hurl output is an HTTP request draft without security verdict assertions; a green Hurl exit is not evidence.
+
+## 24. Templates: reuse a proven case on another target
+
+Once a case is proven, keep it with **Save as template**. A template holds only the case logic: accounts, target addresses, cookies, tokens and run evidence are left out.
+
+To use it elsewhere, open **Templates → Use on a target**. You type the target address yourself; ReproCase never picks, suggests or searches for targets. If the new target's API uses different paths, map them here and keep the `{placeholders}`. The new case starts unapproved with no accounts connected. Review the access policy, connect two test accounts you created on that target (for example with **Verify on my site**), then approve and run.
+
+If a program is saved, the target is checked against its scope when the case is created, and nothing is created if it is out of scope. Every request of the run is checked again. Only use targets you are allowed to test. Templates can be downloaded and imported as JSON.

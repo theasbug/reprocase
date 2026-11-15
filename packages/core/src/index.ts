@@ -21,3 +21,4 @@ export * from './bounty.ts';
 export * from './bounty-tools.ts';
 
 export * from './network.ts';
+export * from './templates.ts';
