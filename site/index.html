@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ReproCase – prove IDOR and BOLA findings with fresh test accounts</title>
+<meta name="description" content="ReproCase is a free, open-source tool that reproduces IDOR/BOLA, role and CORS findings with fresh test accounts and exports a proof triagers rerun with their own accounts. Windows, macOS, Linux, Docker and Burp.">
+<link rel="canonical" href="https://theasbug.github.io/reprocase/">
+<meta name="theme-color" content="#080b14">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ReproCase">
+<meta property="og:title" content="ReproCase – HTTP 200 isn’t proof. ReproCase is.">
+<meta property="og:description" content="Prove IDOR/BOLA, role and CORS findings with fresh test accounts, then reuse the proof as a template. Free and open source.">
+<meta property="og:url" content="https://theasbug.github.io/reprocase/">
+<meta property="og:image" content="https://theasbug.github.io/reprocase/assets/og.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@theasbug">
+<meta name="twitter:image" content="https://theasbug.github.io/reprocase/assets/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%238f74ff'/%3E%3Cpath d='M18 44 32 20l14 24' stroke='%230b0d16' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"ReproCase","applicationCategory":"SecurityApplication","operatingSystem":"Windows, macOS, Linux","description":"Open-source tool that reproduces IDOR/BOLA, role and CORS authorization findings with fresh test accounts and exports a proof that triagers rerun with their own accounts.","url":"https://theasbug.github.io/reprocase/","downloadUrl":"https://github.com/theasbug/reprocase/releases","softwareHelp":"https://github.com/theasbug/reprocase#readme","license":"https://www.apache.org/licenses/LICENSE-2.0","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"theasbug","url":"https://github.com/theasbug"},"sameAs":["https://github.com/theasbug/reprocase"]}
+</script>
+<style>
+:root{--bg:#080b14;--panel:#10141f;--line:#ffffff17;--text:#eef1f8;--muted:#a7b0c4;--faint:#727c92;--accent:#8f74ff;--accent2:#c8b7ff;--cyan:#6fd3ff;--green:#4ade80}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.bg{position:absolute;inset:0;height:1100px;pointer-events:none;overflow:hidden;z-index:0}
+.bg:before{content:"";position:absolute;width:900px;height:900px;left:-300px;top:-420px;background:radial-gradient(circle,#6d4cff55,transparent 62%)}
+.bg:after{content:"";position:absolute;width:1000px;height:1000px;right:-420px;top:120px;background:radial-gradient(circle,#b69cff30,transparent 60%)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(circle at 30% 20%,#000 0,transparent 70%)}
+header{position:relative;z-index:2;padding:22px 0}
+nav{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px}
+.logo i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.links{display:flex;gap:26px;font-size:15px;color:var(--muted)}
+.links a:hover{color:var(--text)}
+.btn{display:inline-flex;align-items:center;gap:9px;padding:12px 20px;border-radius:11px;font-weight:600;font-size:16px;border:1px solid var(--line);transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(90deg,var(--accent),#a790ff);color:#0b0d16;border:0;box-shadow:0 10px 30px #8f74ff40}
+.btn.ghost{background:#ffffff0a}
+.btn.small{padding:8px 14px;font-size:14px}
+.hero{position:relative;z-index:1;padding:70px 0 40px;text-align:center}
+.eyebrow{display:inline-flex;gap:10px;align-items:center;padding:7px 14px;border-radius:999px;border:1px solid #8f74ff55;background:#8f74ff14;color:var(--accent2);font-size:14px;font-weight:600;letter-spacing:.3px}
+h1{margin:26px auto 0;font-size:clamp(42px,7vw,80px);line-height:1.04;letter-spacing:-2.5px;font-weight:800;max-width:960px}
+h1 span,.grad{background:linear-gradient(90deg,var(--accent2),var(--accent) 55%,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{margin:24px auto 0;font-size:clamp(18px,2.2vw,22px);color:var(--muted);max-width:720px}
+.cta{margin-top:34px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.platforms{margin-top:18px;font-size:14px;color:var(--faint)}
+.media{position:relative;margin:56px auto 0;max-width:1000px;border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 40px 100px #000c,0 0 0 1px #0006;background:#000}
+.media video{display:block;width:100%;height:auto}
+section{position:relative;z-index:1;padding:90px 0}
+.kicker{color:var(--accent2);font-weight:700;font-size:14px;letter-spacing:1.6px;text-transform:uppercase}
+h2{margin-top:12px;font-size:clamp(30px,4vw,44px);line-height:1.12;letter-spacing:-1.2px;font-weight:800;max-width:760px}
+.intro{margin-top:16px;color:var(--muted);font-size:18px;max-width:720px}
+.cards{margin-top:40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+.card h3{font-size:19px;margin-bottom:8px}
+.card p{color:var(--muted);font-size:15.5px}
+.card .n{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#8f74ff22;border:1px solid #8f74ff66;color:var(--accent2);font-weight:700;margin-bottom:14px}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;margin-bottom:12px;border:1px solid var(--line);color:var(--muted)}
+.pill.r{color:var(--green);border-color:#4ade8055}
+.split{display:grid;grid-template-columns:1fr 1.25fr;gap:48px;align-items:center}
+.split img{width:100%;border-radius:16px;border:1px solid var(--line);box-shadow:0 30px 80px #000b}
+ul.checks{margin-top:24px;list-style:none;display:flex;flex-direction:column;gap:12px}
+ul.checks li{padding-left:30px;position:relative;color:var(--muted);font-size:16.5px}
+ul.checks li:before{content:"✓";position:absolute;left:0;top:0;color:var(--green);font-weight:800}
+ul.checks b{color:var(--text)}
+.problem{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:40px}
+.quote{background:var(--panel);border:1px solid var(--line);border-left:3px solid #ff7b8a;border-radius:12px;padding:20px 22px;color:var(--muted)}
+.quote strong{display:block;color:#ff9aa6;margin-bottom:6px}
+.dl{margin-top:36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.dl a{display:block;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;transition:border-color .15s}
+.dl a:hover{border-color:#8f74ff88}
+.dl b{display:block;font-size:18px}
+.dl span{color:var(--faint);font-size:14px}
+pre{margin-top:18px;background:#05070d;border:1px solid var(--line);border-radius:12px;padding:18px 20px;overflow-x:auto;font:14px/1.7 "Cascadia Code",Consolas,monospace;color:#cfd6e6}
+details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin-top:12px}
+summary{cursor:pointer;font-weight:600;font-size:17px}
+details p{margin-top:10px;color:var(--muted)}
+.final{text-align:center;padding:100px 0 120px}
+.final h2{margin:12px auto 0}
+footer{border-top:1px solid var(--line);padding:30px 0;color:var(--faint);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+footer a:hover{color:var(--text)}
+@media(max-width:860px){.links{display:none}.split{grid-template-columns:1fr}.hero{padding-top:40px}section{padding:64px 0}}
+</style>
+</head>
+<body>
+<div class="bg"><div class="grid"></div></div>
+<header><div class="wrap"><nav>
+  <a class="logo" href="./"><i></i>ReproCase</a>
+  <div class="links"><a href="#how">How it works</a><a href="#proves">What it proves</a><a href="#templates">Templates</a><a href="#download">Download</a><a href="#faq">FAQ</a></div>
+  <a class="btn ghost small" href="https://github.com/theasbug/reprocase">★ Star on GitHub</a>
+</nav></div></header>
+
+<main>
+<div class="hero"><div class="wrap">
+  <span class="eyebrow">Free &amp; open source · new in 1.3: case templates</span>
+  <h1>HTTP 200 isn’t proof.<br><span>ReproCase is.</span></h1>
+  <p class="lead">Reproduce IDOR/BOLA, role and CORS findings with fresh test accounts, get a clear verdict, and hand the triager a case they rerun with <em>their own</em> accounts.</p>
+  <div class="cta"><a class="btn primary" href="https://github.com/theasbug/reprocase/releases">Download the app</a><a class="btn ghost" href="https://github.com/theasbug/reprocase">View on GitHub</a></div>
+  <p class="platforms">Windows · macOS (Apple silicon &amp; Intel) · Linux · Docker · Burp extension · no API key needed</p>
+  <div class="media"><video controls preload="none" poster="assets/demo-poster.jpg" playsinline><source src="assets/demo.mp4" type="video/mp4">Your browser can’t play this video. <a href="assets/demo.mp4">Download the 60-second demo</a>.</video></div>
+</div></div>
+
+<section><div class="wrap">
+  <span class="kicker">The problem</span>
+  <h2>Authorization bugs die in triage.</h2>
+  <p class="intro">A screenshot of a 200 response doesn’t prove that account B really reached account A’s data. The triager can’t use your sessions, the object you tested is gone, and the report gets closed.</p>
+  <div class="problem">
+    <div class="quote"><strong>“Cannot reproduce.”</strong>Your accounts and IDs don’t exist on the triager’s side.</div>
+    <div class="quote"><strong>“200 doesn’t mean access.”</strong>Many APIs return 200 with an empty body or someone else’s public data.</div>
+    <div class="quote"><strong>“Did anything change?”</strong>A write request that “succeeded” may not have changed anything.</div>
+  </div>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <span class="kicker">How it works</span>
+  <h2>From finding to rerunnable proof in four steps.</h2>
+  <div class="cards">
+    <div class="card"><span class="n">1</span><h3>Connect two test accounts</h3><p>ReproCase finds who each account really is from the API, before anything runs.</p></div>
+    <div class="card"><span class="n">2</span><h3>Paste two requests</h3><p>One that creates an object as A, one that B uses to reach it. Copied straight from Burp or DevTools.</p></div>
+    <div class="card"><span class="n">3</span><h3>Run with a fresh object</h3><p>A brand-new object and marker every run, then <b>Reproduced</b>, <b>Not reproduced</b> or <b>Inconclusive</b>.</p></div>
+    <div class="card"><span class="n">4</span><h3>Share one package</h3><p>Credentials are removed. The triager binds their own accounts and gets the same verdict.</p></div>
+  </div>
+</div></section>
+
+<section id="proves"><div class="wrap">
+  <span class="kicker">What it proves</span>
+  <h2>Checks that a 200 can’t fake.</h2>
+  <div class="cards">
+    <div class="card"><span class="pill r">IDOR / BOLA · read</span><h3>Cross-account reads</h3><p>B reads the exact marker in A’s object that was created in this run.</p></div>
+    <div class="card"><span class="pill r">IDOR / BOLA · write</span><h3>Real changes</h3><p>The owner reads the object before and after, so a change is proven, not assumed.</p></div>
+    <div class="card"><span class="pill r">Role / function</span><h3>Privilege checks</h3><p>A lower role reaches an admin-only action, compared against live roles and an anonymous control.</p></div>
+    <div class="card"><span class="pill r">CORS</span><h3>Browser reads</h3><p>A real Chromium read from a foreign or <code>null</code> origin with the user’s cookie, not just headers that look wrong.</p></div>
+  </div>
+</div></section>
+
+<section id="templates"><div class="wrap split">
+  <div>
+    <span class="kicker">New in 1.3</span>
+    <h2>Proved it once? <span class="grad">Reuse the proof.</span></h2>
+    <ul class="checks">
+      <li><b>Save any case as a template.</b> Accounts, targets, tokens and evidence are left out.</li>
+      <li><b>You type the next target.</b> ReproCase never picks or searches for targets.</li>
+      <li><b>Map paths</b> when the API differs. Placeholders stay the same.</li>
+      <li><b>Scope-checked.</b> A saved program’s scope is checked when the case is created and on every request.</li>
+    </ul>
+  </div>
+  <img src="assets/template-use.jpg" alt="Using a ReproCase template on a new target: the user types the target and maps paths" loading="lazy" width="1000" height="988">
+</div></section>
+
+<section><div class="wrap split">
+  <img src="assets/workbench.png" alt="ReproCase workbench with two verified accounts and a reproduced verdict" loading="lazy">
+  <div>
+    <span class="kicker">Built to be trusted</span>
+    <h2>Safe by default.</h2>
+    <ul class="checks">
+      <li><b>Local-first.</b> Runs on your machine; no account and no API key needed.</li>
+      <li><b>Your program’s rules.</b> Scope, exclusions, rate limit and request budget apply to every request.</li>
+      <li><b>Cleans up.</b> Objects created for a run are removed; if not, you get their address.</li>
+      <li><b>Honest verdicts.</b> Wrong accounts or failed setup end as <b>Inconclusive</b>, never as a finding.</li>
+      <li><b>For triagers too.</b> “Verify on my site” reruns a report on your own target with your own accounts.</li>
+    </ul>
+  </div>
+</div></section>
+
+<section id="download"><div class="wrap">
+  <span class="kicker">Download</span>
+  <h2>Get ReproCase.</h2>
+  <p class="intro">Every build is made on GitHub Actions, with SHA-256 sums and build-provenance attestations. The apps are not code-signed yet.</p>
+  <div class="dl">
+    <a href="https://github.com/theasbug/reprocase/releases"><b>Windows</b><span>x64 · extract and open ReproCase.exe</span></a>
+    <a href="https://github.com/theasbug/reprocase/releases"><b>macOS</b><span>Apple silicon &amp; Intel</span></a>
+    <a href="https://github.com/theasbug/reprocase/releases"><b>Linux</b><span>x64 · tar.gz</span></a>
+    <a href="https://github.com/theasbug/reprocase/tree/main/integrations/burp"><b>Burp Suite</b><span>Right-click → Send to ReproCase</span></a>
+  </div>
+  <pre>git clone https://github.com/theasbug/reprocase.git
+cd reprocase
+docker compose up</pre>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <span class="kicker">FAQ</span>
+  <h2>Questions</h2>
+  <details><summary>Is ReproCase a scanner?</summary><p>No. It reproduces and proves a finding you already have, on a target you name, with test accounts you control. It doesn’t crawl or search for targets.</p></details>
+  <details><summary>What does the triager need?</summary><p>The exported package and two test accounts on their side. They run the same case and get their own verdict.</p></details>
+  <details><summary>Does it need an AI provider?</summary><p>No. The proof engine works without any API key. An optional assistant can use a provider you configure.</p></details>
+  <details><summary>Is it free?</summary><p>Yes. ReproCase is open source under the Apache-2.0 license.</p></details>
+</div></section>
+
+<div class="final"><div class="wrap">
+  <h2>Stop losing valid reports to <span class="grad">“cannot reproduce”.</span></h2>
+  <div class="cta"><a class="btn primary" href="https://github.com/theasbug/reprocase/releases">Download</a><a class="btn ghost" href="https://github.com/theasbug/reprocase">★ Star on GitHub</a></div>
+</div></div>
+</main>
+
+<footer><div class="wrap"><span>ReproCase · Apache-2.0 · made by <a href="https://x.com/theasbug">@theasbug</a></span><span><a href="https://github.com/theasbug/reprocase">GitHub</a> · <a href="https://github.com/theasbug/reprocase/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/theasbug/reprocase/blob/main/docs/SECURITY.md">Security</a></span></div></footer>
+</body>
+</html>
