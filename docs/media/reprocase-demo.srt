@@ -1,0 +1,31 @@
+1
+00:00:00,350 --> 00:00:04,632
+Your IDOR report just got closed: "cannot reproduce."
+
+2
+00:00:05,290 --> 00:00:09,836
+The triager can't use your accounts, and a screenshot isn't proof.
+
+3
+00:00:10,494 --> 00:00:16,384
+ReproCase turns your finding into a case anyone can rerun with fresh accounts.
+
+4
+00:00:17,044 --> 00:00:23,774
+Connect two test accounts. ReproCase checks who each one really is before anything runs.
+
+5
+00:00:24,437 --> 00:00:30,591
+Run it. Account B reads account A's brand-new object, so the verdict is "Reproduced".
+
+6
+00:00:33,659 --> 00:00:40,701
+For writes, a 200 isn't enough: the owner reads the object before and after, so the change is proven.
+
+7
+00:00:46,119 --> 00:00:52,177
+Export one package. The triager reruns it with their own accounts and gets the same verdict.
+
+8
+00:00:52,845 --> 00:01:00,055
+ReproCase. Free and open source, for Windows, macOS, Linux and Docker. Link below.

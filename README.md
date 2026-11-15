@@ -20,9 +20,9 @@
   <a href="docs/QUICKSTART.tr.md">Türkçe</a>
 </p>
 
-<p align="center"><a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4"><img src="docs/images/demo-highlights.gif" alt="Recorded local demo: reproduced, reproduced again with fresh accounts, then not reproduced on the secure target." width="1000"></a></p>
+<p align="center"><a href="https://github.com/theasbug/reprocase/blob/main/docs/media/reprocase-demo.mp4"><img src="docs/images/demo-narrated.gif" alt="Recorded from the real app: two accounts connect, the run is Reproduced, then a write proof where the owner observes the change, then the case is exported." width="1000"></a></p>
 
-<p align="center"><sub>Recorded from the real local app, no API key. <b>Reproduced</b> → fresh accounts → <b>Reproduced</b> → secure target → <b>Not reproduced</b>. <a href="https://github.com/theasbug/reprocase/releases/download/v1.1.0-beta.1/ReproCase-demo-56s-en.mp4">Full 56s recording</a>.</sub></p>
+<p align="center"><sub>Recorded from the real local app, no API key. Two accounts → <b>Reproduced</b> → write proof checked by the owner → export for the triager. <a href="https://github.com/theasbug/reprocase/blob/main/docs/media/reprocase-demo.mp4">▶ Watch the 60s narrated video</a>.</sub></p>
 
 ## The problem
 
